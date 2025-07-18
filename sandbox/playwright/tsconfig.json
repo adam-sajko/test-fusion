@@ -1,0 +1,22 @@
+{
+  "extends": "@tools/tsconfig/base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./",
+    "tsBuildInfoFile": "./tsconfig.tsbuildinfo",
+    "types": ["@playwright/test", "node"],
+    "lib": ["esnext", "dom"],
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*", "tests/**/*", "playwright.config.ts"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "test-results",
+    "playwright-report",
+    "playwright-coverage"
+  ]
+}

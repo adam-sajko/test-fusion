@@ -1,0 +1,25 @@
+{
+  "name": "@sandbox/playwright",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "merge-reports": "playwright merge-reports --config playwright.merge.config.ts ./blob-report",
+    "test:ui": "playwright test --ui",
+    "test:list": "playwright test --list",
+    "test:update-snapshots": "playwright test --update-snapshots",
+    "install-browsers": "playwright install --with-deps",
+    "show-report": "playwright show-report",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist node_modules/.cache tsconfig.tsbuildinfo test-results blob-report playwright-report playwright-coverage snapshots"
+  },
+  "dependencies": {
+    "@test-fusion/playwright-coverage": "workspace:*"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "@tools/tsconfig": "workspace:*",
+    "typescript": "~5.9.2"
+  }
+}

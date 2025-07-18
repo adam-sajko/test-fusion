@@ -1,0 +1,80 @@
+{
+  "name": "@test-fusion/core",
+  "version": "1.0.0",
+  "description": "Merge Jest and Playwright test reports and coverage into a single dashboard",
+  "author": "Adam Sajko",
+  "license": "MIT",
+  "homepage": "https://github.com/adam-sajko/test-fusion#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/adam-sajko/test-fusion.git",
+    "directory": "packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/adam-sajko/test-fusion/issues"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "bin": {
+    "test-fusion": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "template.html",
+    "package.json"
+  ],
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    },
+    "./cli": {
+      "types": "./src/cli.ts",
+      "default": "./dist/cli.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "./cli": {
+        "types": "./dist/cli.d.ts",
+        "default": "./dist/cli.js"
+      },
+      "./package.json": "./package.json"
+    }
+  },
+  "scripts": {
+    "prepack": "tsup",
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist node_modules/.cache tsconfig.tsbuildinfo report.json"
+  },
+  "dependencies": {
+    "commander": "^14.0.0",
+    "handlebars": "^4.7.8",
+    "istanbul-lib-coverage": "^3.2.2",
+    "istanbul-lib-report": "^3.0.1",
+    "istanbul-reports": "^3.1.7",
+    "open": "^11.0.0"
+  },
+  "devDependencies": {
+    "@tools/tsconfig": "workspace:*",
+    "@types/istanbul-lib-coverage": "^2.0.6",
+    "@types/istanbul-lib-report": "^3.0.3",
+    "@types/istanbul-reports": "^3.0.4",
+    "tsx": "^4.20.5",
+    "typescript": "~5.9.2"
+  }
+}

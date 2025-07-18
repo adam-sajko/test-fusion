@@ -1,0 +1,72 @@
+{
+  "name": "@test-fusion/playwright-snapshots",
+  "version": "1.0.0",
+  "description": "Detect and clean stale Playwright screenshot snapshots",
+  "author": "Adam Sajko",
+  "license": "MIT",
+  "homepage": "https://github.com/adam-sajko/test-fusion#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/adam-sajko/test-fusion.git",
+    "directory": "packages/integrations/playwright-snapshots"
+  },
+  "bugs": {
+    "url": "https://github.com/adam-sajko/test-fusion/issues"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "bin": {
+    "playwright-stale-snapshots": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "package.json"
+  ],
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "./package.json": "./package.json"
+    }
+  },
+  "scripts": {
+    "prepack": "tsup",
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist node_modules/.cache tsconfig.tsbuildinfo"
+  },
+  "peerDependencies": {
+    "@playwright/test": ">=1.40.0"
+  },
+  "peerDependenciesMeta": {
+    "@playwright/test": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "commander": "^14.0.0"
+  },
+  "devDependencies": {
+    "@tools/tsconfig": "workspace:*",
+    "tsup": "^8.5.1",
+    "tsx": "^4.20.5",
+    "typescript": "~5.9.2"
+  }
+}

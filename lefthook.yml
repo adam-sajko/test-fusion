@@ -1,0 +1,9 @@
+pre-push:
+  parallel: true
+  commands:
+    lint:
+      run: yarn biome check .
+    types:
+      run: yarn typecheck
+    check-duplicated-dependencies:
+      run: yarn dedupe --check

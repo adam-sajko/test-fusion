@@ -1,0 +1,43 @@
+{
+  "name": "@sandbox/vite-app",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Vite-based web app for the test-fusion library",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 3001",
+    "start": "npx http-server ./dist --cors",
+    "build": "NODE_ENV=production USE_COVERAGE=1 vite build",
+    "test": "vitest run --coverage",
+    "test:no-coverage": "vitest run",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
+    "test:watch": "vitest --watch --coverage",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist node_modules/.cache tsconfig.tsbuildinfo test-report test-results.json coverage .vite"
+  },
+  "dependencies": {
+    "@sandbox/ui": "workspace:*",
+    "react": "19.0.4",
+    "react-dom": "19.0.4"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^6.8.0",
+    "@testing-library/react": "^16.3.0",
+    "@types/node": "^24.5.0",
+    "@types/react": "^19.1.13",
+    "@types/react-dom": "^19.1.9",
+    "@vitejs/plugin-react": "^6.0.1",
+    "@vitest/coverage-v8": "^4.1.0",
+    "@vitest/ui": "^4.1.0",
+    "babel-plugin-istanbul": "^7.0.1",
+    "http-server": "^14.1.1",
+    "jsdom": "^29.0.0",
+    "open": "^11.0.0",
+    "typescript": "~5.9.2",
+    "vite": "^8.0.1",
+    "vite-plugin-istanbul": "^8.0.0",
+    "vitest": "^4.1.0"
+  }
+}

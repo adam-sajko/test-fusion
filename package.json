@@ -1,0 +1,42 @@
+{
+  "name": "test-fusion-monorepo",
+  "private": true,
+  "author": "Adam Sajko",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/adam-sajko/test-fusion.git"
+  },
+  "workspaces": [
+    "sandbox/*",
+    "packages/*",
+    "packages/integrations/*"
+  ],
+  "scripts": {
+    "webpack-app": "yarn workspace @sandbox/webpack-app",
+    "vite-app": "yarn workspace @sandbox/vite-app",
+    "playwright": "yarn workspace @sandbox/playwright",
+    "build": "yarn workspaces foreach --all --topological run build",
+    "dev": "yarn workspaces foreach --all --parallel run dev",
+    "test": "bash scripts/pipeline.sh",
+    "lint": "biome check .",
+    "lint:fix": "biome check --fix .",
+    "format": "biome format .",
+    "format:fix": "biome format --fix .",
+    "generate-report": "tsx packages/core/src/cli.ts build --config sandbox/test-fusion.config.ts",
+    "show-report": "tsx packages/core/src/cli.ts open --dir sandbox",
+    "typecheck": "yarn workspaces foreach --all run typecheck",
+    "clean": "yarn workspaces foreach --all run clean && rm -rf node_modules/.cache test-fusion-report test-results coverage test-report.html test-reports test-results.json mprocs.log",
+    "bump": "bash scripts/bump.sh",
+    "release": "bash scripts/publish.sh"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.8",
+    "lefthook": "^2.1.4",
+    "tsup": "^8.5.1",
+    "tsx": "^4.20.5",
+    "typescript": "~5.9.2",
+    "vite": "^8.0.1"
+  },
+  "packageManager": "yarn@4.9.4"
+}
