@@ -1,0 +1,75 @@
+{
+  "name": "@test-fusion/playwright-coverage",
+  "version": "1.0.0",
+  "description": "Istanbul-based coverage collection for Playwright tests",
+  "author": "Adam Sajko",
+  "license": "MIT",
+  "homepage": "https://github.com/adam-sajko/test-fusion#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/adam-sajko/test-fusion.git",
+    "directory": "packages/integrations/playwright-coverage"
+  },
+  "bugs": {
+    "url": "https://github.com/adam-sajko/test-fusion/issues"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "files": [
+    "dist",
+    "package.json"
+  ],
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "./package.json": "./package.json"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist node_modules/.cache tsconfig.tsbuildinfo"
+  },
+  "peerDependencies": {
+    "@babel/core": ">=7.0.0",
+    "istanbul-lib-instrument": ">=6.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@babel/core": {
+      "optional": true
+    },
+    "istanbul-lib-instrument": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "fast-glob": "^3.3.3",
+    "istanbul-lib-coverage": "^3.2.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.25.2",
+    "@tools/tsconfig": "workspace:*",
+    "@types/istanbul-lib-coverage": "^2.0.6",
+    "@types/istanbul-lib-instrument": "^1.7.8",
+    "istanbul-lib-instrument": "^6.0.3",
+    "typescript": "~5.9.2"
+  }
+}

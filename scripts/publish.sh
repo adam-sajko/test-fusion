@@ -3,6 +3,7 @@ set -euo pipefail
 
 PACKAGES=(
   packages/core
+  packages/integrations/playwright-coverage
   packages/integrations/playwright-snapshots
 )
 

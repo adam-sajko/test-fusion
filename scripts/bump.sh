@@ -3,6 +3,7 @@ set -euo pipefail
 
 PACKAGES=(
   packages/core/package.json
+  packages/integrations/playwright-coverage/package.json
   packages/integrations/playwright-snapshots/package.json
 )
 
@@ -44,10 +45,6 @@ for pkg in "${PACKAGES[@]}"; do
   echo "  updated ${pkg}"
 done
 
-git add "${PACKAGES[@]}"
-git commit -m "v${NEW_VERSION}"
-git tag "v${NEW_VERSION}"
-
 echo ""
 echo "Bumped to v${NEW_VERSION}"
-echo "Run 'git push && git push --tags' when ready."
+echo "Run 'git add -A && git commit -m \"v${NEW_VERSION}\" && git tag \"v${NEW_VERSION}\"' when ready."
