@@ -390,6 +390,7 @@ yarn show-report          # Open the report in your browser
 | `yarn build` | Build all packages |
 | `yarn test` | Full pipeline: build, test, generate report |
 | `yarn test -- --sharded` | Same, but Playwright runs sharded in Docker |
+| `yarn test -- --verbose` | Full pipeline with detailed output |
 | `yarn typecheck` | Type-check all packages |
 | `yarn lint` | Lint with Biome |
 | `yarn lint:fix` | Auto-fix lint issues |

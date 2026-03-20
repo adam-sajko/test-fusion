@@ -19,6 +19,7 @@ MOUNTS=(
 for arg in "$@"; do
   case "$arg" in
     --sharded) SHARDED=true ;;
+    --verbose) VERBOSE=true ;;
   esac
 done
 
