@@ -52,8 +52,11 @@ function normalizeFilePath(
   if (transformPath) {
     transformedPath = transformPath(filePath, cwd);
   } else {
-    if (transformedPath.startsWith('/')) {
-      transformedPath = transformedPath.replace(cwd, '');
+    const normalizedRoot = cwd.endsWith('/') ? cwd : `${cwd}/`;
+    if (transformedPath.startsWith(normalizedRoot)) {
+      transformedPath = transformedPath.slice(normalizedRoot.length);
+    } else if (transformedPath === cwd) {
+      transformedPath = '';
     }
   }
 
@@ -173,9 +176,7 @@ function getCoverageFinalFile(
 
 const SHARD_ENV_KEY = '__PLAYWRIGHT_COVERAGE_SHARD__';
 
-function setShardEnv(
-  shard: { current: number; total: number } | null,
-): void {
+function setShardEnv(shard: { current: number; total: number } | null): void {
   if (shard) {
     process.env[SHARD_ENV_KEY] = JSON.stringify(shard);
   } else {
@@ -239,11 +240,7 @@ async function collectCoverageStructure(
 
       if (initialCoverage?.coverageData) {
         const coverageData = initialCoverage.coverageData;
-        const normalizedPath = normalizeFilePath(
-          fullPath,
-          cwd,
-          transformPath,
-        );
+        const normalizedPath = normalizeFilePath(fullPath, cwd, transformPath);
 
         const resetData = resetCoverageData(coverageData);
 
@@ -288,8 +285,7 @@ async function instrumentExpectedFiles(
 
   const normalizedFiles = expectedFiles.map((p) => {
     const absolutePath = path.resolve(cwd, p);
-    const relativeToRoot = path.relative(cwd, absolutePath);
-    return normalizeFilePath(relativeToRoot, cwd, transformPath);
+    return normalizeFilePath(absolutePath, cwd, transformPath);
   });
 
   if (normalizedFiles.length === 0) {
@@ -375,7 +371,11 @@ export class PlaywrightCoverage {
   private shard: { current: number; total: number } | null = null;
 
   constructor(config: PlaywrightCoverageConfig) {
-    this.config = config;
+    this.config = {
+      ...config,
+      cwd: path.resolve(config.cwd),
+      coverageDir: path.resolve(config.cwd, config.coverageDir),
+    };
   }
 
   async setup(shard?: { current: number; total: number } | null) {

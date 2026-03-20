@@ -49,14 +49,11 @@ program.action(
     try {
       const cwd = options.dir
         ? path.resolve(process.cwd(), options.dir)
-        : (process.env.PROJECT_CWD ?? process.env.INIT_CWD ?? process.cwd());
-      const snapshotsDir = options.snapshotsDir
-        ? path.resolve(cwd, options.snapshotsDir)
-        : undefined;
+        : process.cwd();
 
       const result = await findStaleSnapshots({
         cwd,
-        snapshotsDir,
+        snapshotsDir: options.snapshotsDir,
         delete: Boolean(options.delete),
         project: options.project,
         ignore: options.ignore,

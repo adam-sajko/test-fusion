@@ -36,16 +36,21 @@ export interface StaleSnapshotResult {
  * Find stale Playwright screenshot snapshots that no longer match any test.
  *
  * Uses `playwright test --list --reporter=json` to discover expected snapshots,
- * then compares with actual `.png` files in the snapshots directory. Works with
- * the deterministic snapshot template:
+ * then compares with actual `.png` files in the snapshots directory. Custom
+ * snapshot names passed as string literals to `toHaveScreenshot('name.png')`
+ * are automatically detected by scanning test source files.
+ *
+ * Works with the deterministic snapshot template:
  *
  *   `{snapshotDir}/{projectName}/{testFileDir}/{testFileName}/{arg}{ext}`
  */
 export async function findStaleSnapshots(
   options: StaleSnapshotOptions = {},
 ): Promise<StaleSnapshotResult> {
-  const cwd = options.cwd ?? process.cwd();
-  const snapshotsRoot = options.snapshotsDir ?? path.resolve(cwd, 'snapshots');
+  const cwd = path.resolve(options.cwd ?? process.cwd());
+  const snapshotsRoot = options.snapshotsDir
+    ? path.resolve(cwd, options.snapshotsDir)
+    : path.resolve(cwd, 'snapshots');
   const isCI = Boolean(process.env.CI);
   const shouldDelete = Boolean(options.delete) && !isCI;
 

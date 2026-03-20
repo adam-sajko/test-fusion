@@ -11,6 +11,7 @@ import {
   getWatermarksFromThreshold,
   mergeCoverageData,
   mergeTestStats,
+  normalizeCoverageData,
   prepareDirectory,
   readFusionCoverage,
   readJestCoverage,
@@ -662,15 +663,22 @@ export class ReportBuilder {
       const { createCoverageMap } = istanbulCoverage.default;
 
       let fusionCoverage: CoverageMapData | null = null;
-      const firstReport = allCoverageData.find(
-        (item) => item.coverage !== null,
-      )?.report;
-      const transformPath =
-        firstReport && 'transformPath' in firstReport
-          ? firstReport.transformPath
-          : undefined;
 
-      for (const coverage of coverageList) {
+      const normalizedCoverageList = allCoverageData
+        .filter(
+          (item): item is { report: ReportConfig; coverage: CoverageMapData } =>
+            item.coverage !== null,
+        )
+        .map(({ report, coverage }) => {
+          const tp =
+            'transformPath' in report ? report.transformPath : undefined;
+          if (tp) {
+            return normalizeCoverageData(coverage, this.config.rootDir, tp);
+          }
+          return coverage;
+        });
+
+      for (const coverage of normalizedCoverageList) {
         if (fusionCoverage === null) {
           fusionCoverage = coverage;
         } else {
@@ -678,7 +686,6 @@ export class ReportBuilder {
             fusionCoverage,
             coverage,
             this.config.rootDir,
-            transformPath,
           );
         }
       }
