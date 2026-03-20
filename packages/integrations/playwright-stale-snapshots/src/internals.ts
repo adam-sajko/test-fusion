@@ -83,6 +83,26 @@ export async function pathExists(p: string) {
   }
 }
 
+export async function resolveTestFile(
+  cwd: string,
+  file: string,
+): Promise<string | null> {
+  const direct = path.resolve(cwd, file);
+  if (await pathExists(direct)) return direct;
+
+  try {
+    const entries = await fs.readdir(cwd, { withFileTypes: true });
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue;
+      const candidate = path.resolve(cwd, entry.name, file);
+      if (await pathExists(candidate)) return candidate;
+    }
+  } catch {
+    // cwd not readable
+  }
+  return null;
+}
+
 export async function collectExpectedPrefixes(
   report: JsonReport,
   snapshotsRoot: string,
@@ -289,11 +309,31 @@ export function identifyStaleFiles(
   snapshotsRoot: string,
   expected: Map<string, Set<string>>,
   pngs: string[],
+  options?: { customNames?: Set<string>; ignorePatterns?: string[] },
 ): string[] {
   const stale: string[] = [];
   for (const png of pngs) {
     const parsed = snapshotPathToBucketKey(snapshotsRoot, png);
     if (!parsed) continue;
+
+    if (
+      options?.ignorePatterns?.length &&
+      matchesIgnorePattern(parsed.fileName, options.ignorePatterns)
+    ) {
+      continue;
+    }
+
+    if (options?.customNames?.size) {
+      const base = parsed.fileName.endsWith('.png')
+        ? parsed.fileName.slice(0, -4)
+        : parsed.fileName;
+      if (
+        options.customNames.has(base) ||
+        options.customNames.has(parsed.fileName)
+      ) {
+        continue;
+      }
+    }
 
     const expectedPrefixes = expected.get(parsed.bucketKey);
     if (!expectedPrefixes || expectedPrefixes.size === 0) {
@@ -307,4 +347,54 @@ export function identifyStaleFiles(
 
   stale.sort((a, b) => a.localeCompare(b));
   return stale;
+}
+
+export function extractCustomSnapshotNames(content: string): string[] {
+  const re = /\.toHaveScreenshot\(\s*(['"])([^'"]+)\1/g;
+  const names: string[] = [];
+  for (const match of content.matchAll(re)) {
+    const name = match[2];
+    if (name) {
+      names.push(name.endsWith('.png') ? name.slice(0, -4) : name);
+    }
+  }
+  return names;
+}
+
+export function collectTestFilePaths(report: JsonReport): string[] {
+  const files = new Set<string>();
+
+  function walkSuite(suite: JsonSuite) {
+    if (looksLikeTestFileTitle(suite.title)) files.add(suite.title);
+    else if (suite.file) files.add(suite.file);
+    for (const spec of suite.specs ?? []) {
+      if (spec.file) files.add(spec.file);
+    }
+    for (const child of suite.suites ?? []) {
+      walkSuite(child);
+    }
+  }
+
+  for (const top of report.suites ?? []) {
+    walkSuite(top);
+  }
+
+  return [...files];
+}
+
+export function matchesIgnorePattern(
+  fileName: string,
+  patterns: string[],
+): boolean {
+  for (const pattern of patterns) {
+    if (pattern.includes('*')) {
+      const escaped = pattern
+        .replace(/[.+^${}()|[\]\\]/g, '\\$&')
+        .replace(/\*/g, '.*');
+      if (new RegExp(`^${escaped}$`).test(fileName)) return true;
+    } else {
+      if (fileName === pattern) return true;
+    }
+  }
+  return false;
 }

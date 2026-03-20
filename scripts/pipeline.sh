@@ -82,12 +82,16 @@ fi
 echo "  correctly detected stale snapshots"
 step_end
 
+step_begin "Verifying --ignore skips matching snapshots"
+tsx packages/integrations/playwright-stale-snapshots/src/cli.ts --dir "$PW_DIR" --ignore "*-stale.png" "custom-snapshot-name.png"
+step_end
+
 step_begin "Deleting stale snapshots"
-tsx packages/integrations/playwright-stale-snapshots/src/cli.ts --dir "$PW_DIR" --delete
+CI= tsx packages/integrations/playwright-stale-snapshots/src/cli.ts --dir "$PW_DIR" --delete --ignore "custom-snapshot-name.png"
 step_end
 
 step_begin "Verifying no stale snapshots remain"
-tsx packages/integrations/playwright-stale-snapshots/src/cli.ts --dir "$PW_DIR"
+tsx packages/integrations/playwright-stale-snapshots/src/cli.ts --dir "$PW_DIR" --ignore "custom-snapshot-name.png"
 step_end
 
 step_begin "Generating test-fusion report"

@@ -364,24 +364,6 @@ new PlaywrightCoverage({
 });
 ```
 
-## Stale Snapshots
-
-Playwright doesn't track whether screenshot snapshots still belong to an existing test. When you rename or delete a test, its snapshot files stay behind in the snapshots directory, silently accumulating over time.
-
-[`@test-fusion/playwright-stale-snapshots`](packages/integrations/playwright-stale-snapshots/) fills this gap. It runs `playwright test --list --reporter=json` to discover which snapshots are expected, compares that with the actual `.png` files on disk, and reports (or deletes) the ones that no longer match any test. It handles Playwright's filename hashing for long test titles, so truncated snapshot names are matched correctly.
-
-```bash
-npm install -D @test-fusion/playwright-stale-snapshots
-
-npx playwright-stale-snapshots                        # list stale files (exits 1 if any found)
-npx playwright-stale-snapshots --delete               # remove stale files (refused in CI)
-npx playwright-stale-snapshots --dir path/to/project  # specify Playwright project directory
-npx playwright-stale-snapshots --project chromium     # limit to a single Playwright project
-npx playwright-stale-snapshots --snapshots-dir path   # custom snapshots directory
-```
-
-> **Note:** Stale snapshot detection relies on snapshot file names being derived from the test title path (the default Playwright behavior). If you pass custom names to `toHaveScreenshot('custom-name.png')`, those snapshots won't be matched and will be reported as stale. This tool is designed for projects that use the default auto-generated snapshot names.
-
 ## Contributing
 
 ### Sandbox

@@ -32,6 +32,10 @@ program
   .option(
     '--dir <path>',
     'Playwright project directory (defaults to process.cwd())',
+  )
+  .option(
+    '--ignore <patterns...>',
+    'Snapshot file names or glob patterns to exclude from stale detection',
   );
 
 program.action(
@@ -40,6 +44,7 @@ program.action(
     project?: string;
     snapshotsDir?: string;
     dir?: string;
+    ignore?: string[];
   }) => {
     try {
       const cwd = options.dir
@@ -54,6 +59,7 @@ program.action(
         snapshotsDir,
         delete: Boolean(options.delete),
         project: options.project,
+        ignore: options.ignore,
       });
 
       if (result.staleFiles.length === 0) {

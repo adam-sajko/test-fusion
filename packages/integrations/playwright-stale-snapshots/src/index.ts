@@ -2,9 +2,12 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import {
   collectExpectedPrefixes,
+  collectTestFilePaths,
+  extractCustomSnapshotNames,
   identifyStaleFiles,
   listAllSnapshotPngs,
   pathExists,
+  resolveTestFile,
   runPlaywrightListJson,
 } from './internals.js';
 
@@ -19,6 +22,8 @@ export interface StaleSnapshotOptions {
   delete?: boolean;
   /** Limit scan to a single Playwright project name */
   project?: string;
+  /** Snapshot file names or glob patterns to exclude from stale detection */
+  ignore?: string[];
 }
 
 export interface StaleSnapshotResult {
@@ -56,8 +61,29 @@ export async function findStaleSnapshots(
 
   const jsonReport = runPlaywrightListJson({ cwd, project: options.project });
   const expected = await collectExpectedPrefixes(jsonReport, snapshotsRoot);
+
+  const customNames = new Set<string>();
+  const testFiles = collectTestFilePaths(jsonReport);
+  await Promise.all(
+    testFiles.map(async (file) => {
+      const resolved = await resolveTestFile(cwd, file);
+      if (!resolved) return;
+      try {
+        const content = await fs.readFile(resolved, 'utf8');
+        for (const name of extractCustomSnapshotNames(content)) {
+          customNames.add(name);
+        }
+      } catch {
+        // test file not readable, skip
+      }
+    }),
+  );
+
   const pngs = await listAllSnapshotPngs(snapshotsRoot, options.project);
-  const stale = identifyStaleFiles(snapshotsRoot, expected, pngs);
+  const stale = identifyStaleFiles(snapshotsRoot, expected, pngs, {
+    customNames: customNames.size > 0 ? customNames : undefined,
+    ignorePatterns: options.ignore,
+  });
 
   if (shouldDelete && stale.length > 0) {
     await Promise.all(stale.map((f) => fs.rm(f, { force: true })));
