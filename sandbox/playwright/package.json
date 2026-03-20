@@ -18,7 +18,7 @@
     "@test-fusion/playwright-coverage": "workspace:*"
   },
   "devDependencies": {
-    "@playwright/test": "^1.55.0",
+    "@playwright/test": "^1.58.2",
     "@tools/tsconfig": "workspace:*",
     "typescript": "~5.9.2"
   }

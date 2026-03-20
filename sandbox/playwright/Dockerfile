@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/playwright:v1.55.0-noble as base
+FROM mcr.microsoft.com/playwright:v1.58.2-noble as base
 
 RUN corepack enable
 
