@@ -3060,9 +3060,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@test-fusion/playwright-snapshots@workspace:packages/integrations/playwright-snapshots":
+"@test-fusion/playwright-stale-snapshots@workspace:packages/integrations/playwright-stale-snapshots":
   version: 0.0.0-use.local
-  resolution: "@test-fusion/playwright-snapshots@workspace:packages/integrations/playwright-snapshots"
+  resolution: "@test-fusion/playwright-stale-snapshots@workspace:packages/integrations/playwright-stale-snapshots"
   dependencies:
     "@tools/tsconfig": "workspace:*"
     commander: "npm:^14.0.0"

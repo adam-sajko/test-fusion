@@ -4,7 +4,7 @@ set -euo pipefail
 PACKAGES=(
   packages/core/package.json
   packages/integrations/playwright-coverage/package.json
-  packages/integrations/playwright-snapshots/package.json
+  packages/integrations/playwright-stale-snapshots/package.json
 )
 
 usage() {

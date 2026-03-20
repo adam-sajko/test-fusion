@@ -75,7 +75,7 @@ done
 step_end
 
 step_begin "Verifying stale snapshot detection exits non-zero"
-if tsx packages/integrations/playwright-snapshots/src/cli.ts --dir "$PW_DIR"; then
+if tsx packages/integrations/playwright-stale-snapshots/src/cli.ts --dir "$PW_DIR"; then
   echo "ERROR: stale-snapshots should have exited non-zero but didn't" >&2
   exit 1
 fi
@@ -83,11 +83,11 @@ echo "  correctly detected stale snapshots"
 step_end
 
 step_begin "Deleting stale snapshots"
-tsx packages/integrations/playwright-snapshots/src/cli.ts --dir "$PW_DIR" --delete
+tsx packages/integrations/playwright-stale-snapshots/src/cli.ts --dir "$PW_DIR" --delete
 step_end
 
 step_begin "Verifying no stale snapshots remain"
-tsx packages/integrations/playwright-snapshots/src/cli.ts --dir "$PW_DIR"
+tsx packages/integrations/playwright-stale-snapshots/src/cli.ts --dir "$PW_DIR"
 step_end
 
 step_begin "Generating test-fusion report"

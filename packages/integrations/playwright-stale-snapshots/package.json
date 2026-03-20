@@ -1,5 +1,5 @@
 {
-  "name": "@test-fusion/playwright-snapshots",
+  "name": "@test-fusion/playwright-stale-snapshots",
   "version": "1.0.0",
   "description": "Detect and clean stale Playwright screenshot snapshots",
   "author": "Adam Sajko",
@@ -8,7 +8,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/adam-sajko/test-fusion.git",
-    "directory": "packages/integrations/playwright-snapshots"
+    "directory": "packages/integrations/playwright-stale-snapshots"
   },
   "bugs": {
     "url": "https://github.com/adam-sajko/test-fusion/issues"
@@ -19,9 +19,7 @@
   },
   "main": "./src/index.ts",
   "types": "./src/index.ts",
-  "bin": {
-    "playwright-stale-snapshots": "./dist/cli.js"
-  },
+  "bin": "./dist/cli.js",
   "files": [
     "dist",
     "package.json"

@@ -368,10 +368,10 @@ new PlaywrightCoverage({
 
 Playwright doesn't track whether screenshot snapshots still belong to an existing test. When you rename or delete a test, its snapshot files stay behind in the snapshots directory, silently accumulating over time.
 
-[`@test-fusion/playwright-snapshots`](packages/integrations/playwright-snapshots/) fills this gap. It runs `playwright test --list --reporter=json` to discover which snapshots are expected, compares that with the actual `.png` files on disk, and reports (or deletes) the ones that no longer match any test. It handles Playwright's filename hashing for long test titles, so truncated snapshot names are matched correctly.
+[`@test-fusion/playwright-stale-snapshots`](packages/integrations/playwright-stale-snapshots/) fills this gap. It runs `playwright test --list --reporter=json` to discover which snapshots are expected, compares that with the actual `.png` files on disk, and reports (or deletes) the ones that no longer match any test. It handles Playwright's filename hashing for long test titles, so truncated snapshot names are matched correctly.
 
 ```bash
-npm install -D @test-fusion/playwright-snapshots
+npm install -D @test-fusion/playwright-stale-snapshots
 
 npx playwright-stale-snapshots                        # list stale files (exits 1 if any found)
 npx playwright-stale-snapshots --delete               # remove stale files (refused in CI)

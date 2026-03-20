@@ -4,7 +4,7 @@ set -euo pipefail
 PACKAGES=(
   packages/core
   packages/integrations/playwright-coverage
-  packages/integrations/playwright-snapshots
+  packages/integrations/playwright-stale-snapshots
 )
 
 DRY_RUN=false

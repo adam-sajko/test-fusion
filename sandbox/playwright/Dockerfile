@@ -8,7 +8,7 @@ COPY package.json .yarnrc.yml yarn.lock ./
 COPY .yarn .yarn
 COPY packages/tsconfig/package.json packages/tsconfig/
 COPY packages/integrations/playwright-coverage/package.json packages/integrations/playwright-coverage/
-COPY packages/integrations/playwright-snapshots/package.json packages/integrations/playwright-snapshots/
+COPY packages/integrations/playwright-stale-snapshots/package.json packages/integrations/playwright-stale-snapshots/
 COPY packages/core/package.json packages/core/
 COPY sandbox/ui/package.json sandbox/ui/
 COPY sandbox/vite-app/package.json sandbox/vite-app/
