@@ -140,9 +140,12 @@ export class ReportBuilder {
       return getCoverageCssClass(percentage, [avgLow, avgHigh]);
     });
 
-    this.handlebars.registerHelper('gt', (a: number, b: number) => {
-      return a > b;
-    });
+    this.handlebars.registerHelper(
+      'gt',
+      function (this: unknown, a: number, b: number, options: Handlebars.HelperOptions) {
+        return a > b ? options.fn(this) : options.inverse(this);
+      },
+    );
 
     this.handlebars.registerHelper('eq', (a: unknown, b: unknown) => {
       return a === b;
