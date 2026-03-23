@@ -1,6 +1,6 @@
 {
   "name": "@test-fusion/playwright-stale-snapshots",
-  "version": "1.1.2",
+  "version": "1.1.3",
   "description": "Detect and clean stale Playwright screenshot snapshots",
   "author": "Adam Sajko",
   "license": "MIT",

@@ -142,7 +142,12 @@ export class ReportBuilder {
 
     this.handlebars.registerHelper(
       'gt',
-      function (this: unknown, a: number, b: number, options: Handlebars.HelperOptions) {
+      function (
+        this: unknown,
+        a: number,
+        b: number,
+        options: Handlebars.HelperOptions,
+      ) {
         return a > b ? options.fn(this) : options.inverse(this);
       },
     );
