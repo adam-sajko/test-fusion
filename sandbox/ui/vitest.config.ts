@@ -12,7 +12,7 @@ export default defineConfig({
       json: './test-results.json',
     },
     coverage: {
-      provider: 'v8',
+      provider: 'istanbul',
       reportsDirectory: './coverage',
       reporter: ['text', 'json', 'html', 'lcov'],
       exclude: [

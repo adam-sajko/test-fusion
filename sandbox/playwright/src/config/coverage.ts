@@ -7,16 +7,57 @@ const coverageDir = path.resolve(
   '../../playwright-coverage',
 );
 
+const uiPatterns = [
+  'ui/src/components/**/*.{ts,tsx}',
+  '!**/*.test.{ts,tsx}',
+  '!ui/src/index.ts',
+];
+
 export const playwrightCoverage = new PlaywrightCoverage({
   cwd: sandboxDir,
   coverageDir,
-  collectCoverageFrom: [
-    'ui/src/components/**/*.{ts,tsx}',
-    'vite-app/src/**/*.{ts,tsx}',
-    'webpack-app/src/**/*.{ts,tsx}',
-    '!**/*.test.{ts,tsx}',
-    '!**/test-setup.ts',
-    '!*/src/index.{ts,tsx}',
-    '!ui/src/index.ts',
+  projects: [
+    {
+      collectCoverageFrom: uiPatterns,
+      getBabelConfig: () => ({
+        presets: [
+          '@babel/preset-env',
+          ['@babel/preset-react', { runtime: 'automatic' }],
+          '@babel/preset-typescript',
+        ],
+        plugins: [
+          [
+            'babel-plugin-istanbul',
+            {
+              cwd: sandboxDir,
+              coverageVariable: '__coverage__',
+              excludeNodeModules: true,
+              include: uiPatterns.filter((p) => !p.startsWith('!')),
+              exclude: uiPatterns
+                .filter((p) => p.startsWith('!'))
+                .map((p) => p.slice(1)),
+            },
+          ],
+        ],
+        sourceMaps: false,
+        babelrc: false,
+      }),
+    },
+    {
+      collectCoverageFrom: [
+        'vite-app/src/**/*.{ts,tsx}',
+        '!**/*.test.{ts,tsx}',
+        '!**/test-setup.ts',
+        '!*/src/index.{ts,tsx}',
+      ],
+    },
+    {
+      collectCoverageFrom: [
+        'webpack-app/src/**/*.{ts,tsx}',
+        '!**/*.test.{ts,tsx}',
+        '!**/test-setup.ts',
+        '!*/src/index.{ts,tsx}',
+      ],
+    },
   ],
 });

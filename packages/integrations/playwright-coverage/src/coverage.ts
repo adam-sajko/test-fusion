@@ -135,23 +135,36 @@ function resetCoverageData<T extends NormalizedCoverageData>(
 
 function prepareDirectory(dirPath: string): void {
   if (fs.existsSync(dirPath)) {
-    try {
-      fs.rmSync(dirPath, { recursive: true, force: true });
-    } catch (error) {
-      console.error(`Warning: Could not remove directory ${dirPath}:`, error);
+    for (const entry of fs.readdirSync(dirPath)) {
+      fs.rmSync(path.join(dirPath, entry), { recursive: true, force: true });
     }
+  } else {
+    fs.mkdirSync(dirPath, { recursive: true });
   }
+}
 
-  fs.mkdirSync(dirPath, { recursive: true });
+/** Per-project coverage configuration for offline zero-coverage instrumentation. */
+export interface CoverageProject {
+  /** Glob patterns (with `!` negations) selecting source files to instrument for this project. */
+  collectCoverageFrom: string[];
+  /** Babel config for offline zero-coverage instrumentation. Must include `babel-plugin-istanbul`. When omitted, no zero-coverage baseline is generated for this project. */
+  getBabelConfig?: () => Promise<TransformOptions> | TransformOptions;
 }
 
 export interface PlaywrightCoverageConfig {
+  /** Base directory for resolving globs and normalizing file paths. */
   cwd: string;
+  /** Directory where coverage artifacts (slices, final report, zero-coverage baseline) are written. Resolved relative to `cwd`. */
   coverageDir: string;
-  collectCoverageFrom: string[];
-  /** Optional: provide a Babel config to enable offline instrumentation for zero-coverage baselines. */
-  getBabelConfig?: () => Promise<TransformOptions> | TransformOptions;
+  /** Optional path transform applied when normalizing file paths in coverage data. Useful for Docker or monorepo setups where absolute paths differ between environments. */
   transformPath?: (filePath: string, cwd: string) => string;
+  /**
+   * Per-project coverage configuration. Each entry defines a set of source
+   * files and an optional Babel config for offline zero-coverage baselines.
+   * When `getBabelConfig` is provided, files not visited by any test appear
+   * in the report with 0% coverage.
+   */
+  projects?: CoverageProject[];
 }
 
 function getCoverageSlicesFile(
@@ -194,6 +207,7 @@ function getShardFromEnv(): { current: number; total: number } | null {
   }
 }
 
+
 function getExpectedCoverageFile(coverageDir: string): string {
   return path.resolve(coverageDir, 'coverage-zero.json');
 }
@@ -228,15 +242,18 @@ async function collectCoverageStructure(
 
       const transformResult = await babel.transformAsync(sourceCode, {
         filename: fullPath,
+        ast: true,
         ...babelConfig,
       });
 
-      if (!transformResult || !transformResult.code) {
+      if (!transformResult?.ast) {
         console.warn(`Babel transformation failed for ${filePath}`);
         continue;
       }
 
-      const initialCoverage = readInitialCoverage(transformResult.code);
+      const initialCoverage = readInitialCoverage(
+        transformResult.ast as unknown as string,
+      );
 
       if (initialCoverage?.coverageData) {
         const coverageData = initialCoverage.coverageData;
@@ -283,17 +300,12 @@ async function instrumentExpectedFiles(
     cwd,
   });
 
-  const normalizedFiles = expectedFiles.map((p) => {
-    const absolutePath = path.resolve(cwd, p);
-    return normalizeFilePath(absolutePath, cwd, transformPath);
-  });
-
-  if (normalizedFiles.length === 0) {
+  if (expectedFiles.length === 0) {
     return;
   }
 
   const coverageStructure = await collectCoverageStructure(
-    normalizedFiles,
+    expectedFiles,
     cwd,
     getBabelConfig,
     transformPath,
@@ -366,6 +378,7 @@ function generateIstanbulCoverageReport(
   printStatus('Generated JSON report', 'success', coverageFinalFile);
 }
 
+/** Istanbul-based coverage collection for Playwright tests. Collects `window.__coverage__` from instrumented apps and merges it into a standard `coverage-final.json`. */
 export class PlaywrightCoverage {
   private config: PlaywrightCoverageConfig;
   private shard: { current: number; total: number } | null = null;
@@ -378,6 +391,7 @@ export class PlaywrightCoverage {
     };
   }
 
+  /** Prepare the coverage directory, reset slices, and optionally instrument files for zero-coverage baselines. Pass `config.shard` when using Playwright sharding. */
   async setup(shard?: { current: number; total: number } | null) {
     this.shard = shard ?? null;
     setShardEnv(this.shard);
@@ -398,17 +412,22 @@ export class PlaywrightCoverage {
       prepareCoverageDirectory(this.config.coverageDir);
     }
 
-    if (this.config.getBabelConfig) {
-      await instrumentExpectedFiles(
-        this.config.cwd,
-        this.config.coverageDir,
-        this.config.collectCoverageFrom,
-        this.config.getBabelConfig,
-        this.config.transformPath,
-      );
+    if (this.config.projects) {
+      for (const project of this.config.projects) {
+        if (project.getBabelConfig) {
+          await instrumentExpectedFiles(
+            this.config.cwd,
+            this.config.coverageDir,
+            project.collectCoverageFrom,
+            project.getBabelConfig,
+            this.config.transformPath,
+          );
+        }
+      }
     }
   }
 
+  /** Merge all collected coverage slices into a final `coverage-final.json`, backfilling zero-coverage baselines for unvisited files. Call this in `globalTeardown`. */
   finish() {
     generateIstanbulCoverageReport(this.config, this.shard);
   }

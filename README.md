@@ -29,43 +29,43 @@ Each runner needs to output Istanbul coverage data (`coverage-final.json`) and, 
 
 ### 3. Configure Test Fusion
 
-Create `test-fusion.config.ts` at your project root. Point it at the coverage and results directories from each runner:
+Create a `test-fusion.config` file (`.ts`, `.js`, `.mjs`, or `.cjs`) at your project root. Point it at the coverage and results directories from each runner:
 
 ```ts
-import { defineConfig } from '@test-fusion/core';
+import { defineConfig } from "@test-fusion/core";
 
 export default defineConfig({
-  name: 'My Project',
+  name: "My Project",
   rootDir: import.meta.dirname,
   reports: [
     {
-      type: 'vitest',
-      name: 'Vitest',
+      type: "vitest",
+      name: "Vitest",
       source: {
-        coverage: { dir: '<path-to-vitest-coverage-dir>' },
-        testReport: { dir: '<path-to-vitest-report-dir>' }, // optional
-        testResults: { json: '<path-to-vitest-results.json>' }, // optional
+        coverage: { dir: "<path-to-vitest-coverage-dir>" },
+        testReport: { dir: "<path-to-vitest-report-dir>" }, // optional
+        testResults: { json: "<path-to-vitest-results.json>" }, // optional
       },
     },
     {
-      type: 'playwright',
-      name: 'E2E Tests',
+      type: "playwright",
+      name: "E2E Tests",
       source: {
-        coverage: { dir: '<path-to-playwright-coverage-dir>' },
-        testReport: { dir: '<path-to-playwright-report-dir>' }, // optional
-        testResults: { json: '<path-to-playwright-results.json>' }, // optional
+        coverage: { dir: "<path-to-playwright-coverage-dir>" },
+        testReport: { dir: "<path-to-playwright-report-dir>" }, // optional
+        testResults: { json: "<path-to-playwright-results.json>" }, // optional
       },
     },
   ],
 });
 ```
 
-| Type | Test results parsing | Use for |
-|------|---------------------|---------|
-| `vitest` | Vitest JSON output | Vitest |
-| `jest` | Jest JSON output | Jest |
-| `playwright` | Playwright JSON results | Playwright |
-| `other` | None (coverage only) | Node test runner, Mocha, Karma, or any other runner |
+| Type         | Test results parsing    | Use for                                             |
+| ------------ | ----------------------- | --------------------------------------------------- |
+| `vitest`     | Vitest JSON output      | Vitest                                              |
+| `jest`       | Jest JSON output        | Jest                                                |
+| `playwright` | Playwright JSON results | Playwright                                          |
+| `other`      | None (coverage only)    | Node test runner, Mocha, Karma, or any other runner |
 
 `vitest` and `jest` share the same JSON format internally — use whichever matches your runner. Use `type: 'other'` when your test runner outputs Istanbul coverage but doesn't match any of the above. Coverage will be merged into the fusion report; test results (pass/fail counts) will be omitted from the dashboard.
 
@@ -86,19 +86,19 @@ npx test-fusion open                     # Serve and open in browser
 Configure Vitest to produce coverage and JSON test results (`vitest.config.ts`):
 
 ```ts
-import { defineConfig } from 'vitest/config';
+import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
     coverage: {
-      provider: 'v8',
-      reporter: ['json', 'html', 'lcov'],
+      provider: "istanbul",
+      reporter: ["json", "html", "lcov"],
       thresholds: { branches: 80, functions: 80, lines: 80, statements: 80 },
     },
-    reporters: ['default', 'json', 'html'],
+    reporters: ["default", "json", "html"],
     outputFile: {
-      json: './test-results.json',
-      html: './test-report/index.html',
+      json: "./test-results.json",
+      html: "./test-report/index.html",
     },
   },
 });
@@ -113,7 +113,7 @@ Configure Jest to produce coverage and JSON test results (`jest.config.js`):
 ```js
 module.exports = {
   collectCoverage: true,
-  coverageReporters: ['json', 'html', 'lcov'],
+  coverageReporters: ["json", "html", "lcov"],
   coverageThreshold: {
     global: { branches: 80, functions: 80, lines: 80, statements: 80 },
   },
@@ -137,15 +137,16 @@ Add Istanbul instrumentation to your bundler so `window.__coverage__` is availab
 **Vite** — using `vite-plugin-istanbul` (works with any framework):
 
 ```ts
-import { defineConfig } from 'vite';
-import istanbul from 'vite-plugin-istanbul';
+import { defineConfig } from "vite";
+import istanbul from "vite-plugin-istanbul";
 
 export default defineConfig({
   plugins: [
-    process.env.USE_COVERAGE && istanbul({
-      include: ['src/**/*.{ts,tsx}'],
-      exclude: ['**/*.test.{ts,tsx}'],
-    }),
+    process.env.USE_COVERAGE &&
+      istanbul({
+        include: ["src/**/*.{ts,tsx}"],
+        exclude: ["**/*.test.{ts,tsx}"],
+      }),
   ].filter(Boolean),
 });
 ```
@@ -153,19 +154,22 @@ export default defineConfig({
 **Vite + React** — alternatively, use the built-in Babel integration of `@vitejs/plugin-react`:
 
 ```ts
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [
     react({
       babel: {
         plugins: [
-          process.env.USE_COVERAGE && ['babel-plugin-istanbul', {
-            coverageVariable: '__coverage__',
-            include: ['src/**/*.{ts,tsx}'],
-            exclude: ['**/*.test.{ts,tsx}'],
-          }],
+          process.env.USE_COVERAGE && [
+            "babel-plugin-istanbul",
+            {
+              coverageVariable: "__coverage__",
+              include: ["src/**/*.{ts,tsx}"],
+              exclude: ["**/*.test.{ts,tsx}"],
+            },
+          ],
         ].filter(Boolean),
       },
     }),
@@ -178,22 +182,29 @@ export default defineConfig({
 ```js
 module.exports = {
   module: {
-    rules: [{
-      test: /\.tsx?$/,
-      use: [
-        process.env.USE_COVERAGE && {
-          loader: 'babel-loader',
-          options: {
-            plugins: [['babel-plugin-istanbul', {
-              coverageVariable: '__coverage__',
-              include: ['src/**/*.{ts,tsx}'],
-              exclude: ['**/*.test.{ts,tsx}'],
-            }]],
+    rules: [
+      {
+        test: /\.tsx?$/,
+        use: [
+          process.env.USE_COVERAGE && {
+            loader: "babel-loader",
+            options: {
+              plugins: [
+                [
+                  "babel-plugin-istanbul",
+                  {
+                    coverageVariable: "__coverage__",
+                    include: ["src/**/*.{ts,tsx}"],
+                    exclude: ["**/*.test.{ts,tsx}"],
+                  },
+                ],
+              ],
+            },
           },
-        },
-        'ts-loader',
-      ].filter(Boolean),
-    }],
+          "ts-loader",
+        ].filter(Boolean),
+      },
+    ],
   },
 };
 ```
@@ -203,7 +214,7 @@ Any bundler that produces Istanbul instrumentation will work — the examples ab
 #### Step 2: Install the Coverage Package
 
 ```bash
-npm install @test-fusion/playwright-coverage babel-plugin-istanbul
+npm install @test-fusion/playwright-coverage
 ```
 
 #### Step 3: Set Up Coverage Collection
@@ -213,20 +224,24 @@ Create four files to wire up the coverage lifecycle: initialize before all tests
 **`config/coverage.ts`** — shared instance:
 
 ```ts
-import { PlaywrightCoverage } from '@test-fusion/playwright-coverage';
+import { PlaywrightCoverage } from "@test-fusion/playwright-coverage";
 
 export const playwrightCoverage = new PlaywrightCoverage({
   cwd: import.meta.dirname,
-  coverageDir: './playwright-coverage',
-  collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/**/*.test.{ts,tsx}'],
+  coverageDir: "./playwright-coverage",
+  projects: [
+    {
+      collectCoverageFrom: ["src/**/*.{ts,tsx}", "!src/**/*.test.{ts,tsx}"],
+    },
+  ],
 });
 ```
 
 **`config/global-setup.ts`** — initialize coverage (and pass shard info if sharding):
 
 ```ts
-import type { FullConfig } from '@playwright/test';
-import { playwrightCoverage } from './coverage';
+import type { FullConfig } from "@playwright/test";
+import { playwrightCoverage } from "./coverage";
 
 export default async function globalSetup(config: FullConfig) {
   await playwrightCoverage.setup(config.shard);
@@ -236,7 +251,7 @@ export default async function globalSetup(config: FullConfig) {
 **`config/global-teardown.ts`** — generate the coverage report:
 
 ```ts
-import { playwrightCoverage } from './coverage';
+import { playwrightCoverage } from "./coverage";
 
 export default async function globalTeardown() {
   playwrightCoverage.finish();
@@ -246,14 +261,14 @@ export default async function globalTeardown() {
 **`fixtures/base.ts`** — collect `window.__coverage__` after each test:
 
 ```ts
-import { test as base } from '@playwright/test';
-import { playwrightCoverage } from '../config/coverage';
+import { test as base } from "@playwright/test";
+import { playwrightCoverage } from "../config/coverage";
 
 export const test = base.extend({
   page: async ({ page, browserName }, use) => {
     await use(page);
     // Collect coverage from one browser only to avoid duplicates across projects
-    if (browserName === 'chromium') {
+    if (browserName === "chromium") {
       const coverage = await page.evaluate(() => (window as any).__coverage__);
       playwrightCoverage.addCoverage(coverage);
     }
@@ -268,15 +283,15 @@ Coverage is collected from one browser only (chromium) to avoid duplicates when 
 Point your Playwright config at the global setup/teardown files, and make sure your app is served with `USE_COVERAGE` enabled so the instrumented build exposes `window.__coverage__`:
 
 ```ts
-import { defineConfig } from '@playwright/test';
+import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
-  globalSetup: './config/global-setup.ts',
-  globalTeardown: './config/global-teardown.ts',
+  globalSetup: "./config/global-setup.ts",
+  globalTeardown: "./config/global-teardown.ts",
 
   webServer: {
-    command: 'USE_COVERAGE=1 npm run build && npm run preview',
-    url: 'http://localhost:4173',
+    command: "USE_COVERAGE=1 npm run build && npm run preview",
+    url: "http://localhost:4173",
     reuseExistingServer: false,
   },
 
@@ -297,6 +312,48 @@ webServer: {
 
 Use the custom `test` from `fixtures/base.ts` in your test files instead of importing from `@playwright/test` directly.
 
+#### Zero-Coverage Baselines
+
+By default, only files that are rendered during tests appear in the coverage report. To include untested files with 0% coverage, install the instrumentation dependencies and add `getBabelConfig` to a project entry:
+
+```bash
+npm install @babel/core babel-plugin-istanbul istanbul-lib-instrument
+```
+
+Use the same Babel presets and plugins as your bundler config so the coverage structure (statements, branches, functions) matches what the runtime produces:
+
+```ts
+export const playwrightCoverage = new PlaywrightCoverage({
+  cwd: import.meta.dirname,
+  coverageDir: "./playwright-coverage",
+  projects: [
+    {
+      collectCoverageFrom: ["src/**/*.{ts,tsx}", "!src/**/*.test.{ts,tsx}"],
+      getBabelConfig: () => ({
+        presets: [
+          "@babel/preset-env",
+          "@babel/preset-react",
+          "@babel/preset-typescript",
+        ],
+        plugins: [
+          [
+            "babel-plugin-istanbul",
+            {
+              cwd: import.meta.dirname,
+              coverageVariable: "__coverage__",
+              include: ["src/**/*.{ts,tsx}"],
+              exclude: ["**/*.test.{ts,tsx}"],
+            },
+          ],
+        ],
+        sourceMaps: false,
+        babelrc: false,
+      }),
+    },
+  ],
+});
+```
+
 #### Sharding
 
 Coverage collection works with Playwright sharding out of the box. When `config.shard` is passed to `playwrightCoverage.setup()`, the plugin writes per-shard files (`coverage-shard-1.json`, `coverage-shard-2.json`, etc.) instead of a single `coverage-final.json`. When `test-fusion build` runs, it detects and merges them via Istanbul automatically.
@@ -314,14 +371,14 @@ For any runner that produces Istanbul coverage but isn't Vitest, Jest, or Playwr
 In a monorepo, each app may instrument shared packages. Set `cwd` to the monorepo root so that coverage paths are relative to the root (not to each app), and use the same `include`/`exclude` patterns across all bundlers so coverage is consistent when merged:
 
 ```ts
-import path from 'node:path';
+import path from "node:path";
 
-const monorepoRoot = path.resolve(import.meta.dirname, '../..');
+const monorepoRoot = path.resolve(import.meta.dirname, "../..");
 
 istanbul({
   cwd: monorepoRoot,
-  include: ['packages/**/src/**/*.{ts,tsx}'],
-  exclude: ['**/*.test.{ts,tsx}'],
+  include: ["packages/**/src/**/*.{ts,tsx}"],
+  exclude: ["**/*.test.{ts,tsx}"],
   // ...
 });
 ```
@@ -329,12 +386,16 @@ istanbul({
 The same applies to `PlaywrightCoverage` — set `cwd` to the monorepo root:
 
 ```ts
-const cwd = path.resolve(import.meta.dirname, '../../');
+const cwd = path.resolve(import.meta.dirname, "../../");
 
 new PlaywrightCoverage({
   cwd,
-  coverageDir: path.resolve(import.meta.dirname, '../playwright-coverage'),
-  collectCoverageFrom: ['packages/**/src/**/*.{ts,tsx}'],
+  coverageDir: path.resolve(import.meta.dirname, "../playwright-coverage"),
+  projects: [
+    {
+      collectCoverageFrom: ["packages/**/src/**/*.{ts,tsx}"],
+    },
+  ],
 });
 ```
 
@@ -358,9 +419,13 @@ However, when a runner produces paths that don't start with `rootDir`, the autom
 ```ts
 new PlaywrightCoverage({
   cwd: import.meta.dirname,
-  coverageDir: './playwright-coverage',
-  collectCoverageFrom: ['src/**/*.{ts,tsx}'],
-  transformPath: (filePath, cwd) => filePath.replace(/^.*?src\//, 'src/'),
+  coverageDir: "./playwright-coverage",
+  transformPath: (filePath, cwd) => filePath.replace(/^.*?src\//, "src/"),
+  projects: [
+    {
+      collectCoverageFrom: ["src/**/*.{ts,tsx}"],
+    },
+  ],
 });
 ```
 
@@ -384,21 +449,21 @@ yarn show-report          # Open the report in your browser
 
 ### Commands
 
-| Command | Description |
-|---------|-------------|
-| `yarn dev` | Start all dev servers |
-| `yarn build` | Build all packages |
-| `yarn test` | Full pipeline: build, test, generate report |
+| Command                  | Description                                 |
+| ------------------------ | ------------------------------------------- |
+| `yarn dev`               | Start all dev servers                       |
+| `yarn build`             | Build all packages                          |
+| `yarn test`              | Full pipeline: build, test, generate report |
 | `yarn test -- --sharded` | Same, but Playwright runs sharded in Docker |
-| `yarn test -- --verbose` | Full pipeline with detailed output |
-| `yarn typecheck` | Type-check all packages |
-| `yarn lint` | Lint with Biome |
-| `yarn lint:fix` | Auto-fix lint issues |
-| `yarn format` | Check formatting with Biome |
-| `yarn format:fix` | Auto-format all files |
-| `yarn generate-report` | Generate the test-fusion dashboard |
-| `yarn show-report` | Serve and open the report |
-| `yarn clean` | Remove all build artifacts |
+| `yarn test -- --verbose` | Full pipeline with detailed output          |
+| `yarn typecheck`         | Type-check all packages                     |
+| `yarn lint`              | Lint with Biome                             |
+| `yarn lint:fix`          | Auto-fix lint issues                        |
+| `yarn format`            | Check formatting with Biome                 |
+| `yarn format:fix`        | Auto-format all files                       |
+| `yarn generate-report`   | Generate the test-fusion dashboard          |
+| `yarn show-report`       | Serve and open the report                   |
+| `yarn clean`             | Remove all build artifacts                  |
 
 ## License
 
