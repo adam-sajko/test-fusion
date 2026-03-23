@@ -207,7 +207,6 @@ function getShardFromEnv(): { current: number; total: number } | null {
   }
 }
 
-
 function getExpectedCoverageFile(coverageDir: string): string {
   return path.resolve(coverageDir, 'coverage-zero.json');
 }
