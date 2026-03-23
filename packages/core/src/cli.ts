@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { Command } from 'commander';
 import open from 'open';
@@ -7,23 +8,33 @@ import open from 'open';
 import { ReportBuilder } from './report-builder.js';
 import type { Config } from './types/index.js';
 
+const CONFIG_EXTENSIONS = ['.ts', '.js', '.mjs', '.cjs'] as const;
+
 interface LoadConfigOptions {
   config?: string;
   dir?: string;
 }
 
-async function loadConfig(options: LoadConfigOptions = {}): Promise<Config> {
-  // --config and --dir resolve from cwd, as consumers expect.
+function resolveConfigPath(options: LoadConfigOptions): string {
+  if (options.config) return path.resolve(process.cwd(), options.config);
+
   // Auto-discovery falls back to PROJECT_CWD (yarn berry) / INIT_CWD (npm)
   // so `yarn workspace <pkg> generate-report` finds the config at the monorepo root.
-  const resolvedPath = options.config
-    ? path.resolve(process.cwd(), options.config)
-    : path.resolve(
-        options.dir
-          ? path.resolve(process.cwd(), options.dir)
-          : (process.env.PROJECT_CWD ?? process.env.INIT_CWD ?? process.cwd()),
-        'test-fusion.config.ts',
-      );
+  const baseDir = options.dir
+    ? path.resolve(process.cwd(), options.dir)
+    : (process.env.PROJECT_CWD ?? process.env.INIT_CWD ?? process.cwd());
+
+  for (const ext of CONFIG_EXTENSIONS) {
+    const candidate = path.resolve(baseDir, `test-fusion.config${ext}`);
+    if (existsSync(candidate)) return candidate;
+  }
+
+  // Fall back to .ts so the error message stays familiar
+  return path.resolve(baseDir, 'test-fusion.config.ts');
+}
+
+async function loadConfig(options: LoadConfigOptions = {}): Promise<Config> {
+  const resolvedPath = resolveConfigPath(options);
 
   try {
     const configModule = await import(resolvedPath);
