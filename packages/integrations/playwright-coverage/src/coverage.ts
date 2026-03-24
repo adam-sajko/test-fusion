@@ -375,6 +375,8 @@ function generateIstanbulCoverageReport(
   fs.mkdirSync(config.coverageDir, { recursive: true });
   fs.writeFileSync(coverageFinalFile, JSON.stringify(normalizedCoverage));
   printStatus('Generated JSON report', 'success', coverageFinalFile);
+
+  fs.rmSync(coverageSlicesFile, { force: true });
 }
 
 /** Istanbul-based coverage collection for Playwright tests. Collects `window.__coverage__` from instrumented apps and merges it into a standard `coverage-final.json`. */
