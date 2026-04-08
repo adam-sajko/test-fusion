@@ -1,9 +1,19 @@
+import path from 'node:path';
 import { defineConfig, devices } from '@playwright/test';
+import type { PlaywrightCoverageReporterOptions } from '@test-fusion/playwright-coverage';
 
 const WEBPACK_APP_PORT = 3000;
 const VITE_APP_PORT = 3001;
 
 const isCI = !!process.env.CI;
+
+const sandboxDir = path.resolve(import.meta.dirname, '..');
+
+const uiPatterns = [
+  'ui/src/components/**/*.{ts,tsx}',
+  '!**/*.test.{ts,tsx}',
+  '!ui/src/index.ts',
+];
 
 export default defineConfig({
   snapshotDir: './snapshots',
@@ -27,10 +37,58 @@ export default defineConfig({
     ['html', { open: 'never', outputFolder: './playwright-report' }],
     ['json', { outputFile: './test-results/results.json' }],
     ['list', { printSteps: true }],
+    [
+      '@test-fusion/playwright-coverage',
+      {
+        cwd: sandboxDir,
+        coverageDir: 'playwright/playwright-coverage',
+        projects: [
+          {
+            collectCoverageFrom: uiPatterns,
+            getBabelConfig: () => ({
+              presets: [
+                '@babel/preset-env',
+                ['@babel/preset-react', { runtime: 'automatic' }],
+                '@babel/preset-typescript',
+              ],
+              plugins: [
+                [
+                  'babel-plugin-istanbul',
+                  {
+                    cwd: sandboxDir,
+                    coverageVariable: '__coverage__',
+                    excludeNodeModules: true,
+                    include: uiPatterns.filter((p) => !p.startsWith('!')),
+                    exclude: uiPatterns
+                      .filter((p) => p.startsWith('!'))
+                      .map((p) => p.slice(1)),
+                  },
+                ],
+              ],
+              sourceMaps: false,
+              babelrc: false,
+            }),
+          },
+          {
+            collectCoverageFrom: [
+              'vite-app/src/**/*.{ts,tsx}',
+              '!**/*.test.{ts,tsx}',
+              '!**/test-setup.ts',
+              '!*/src/index.{ts,tsx}',
+            ],
+          },
+          {
+            collectCoverageFrom: [
+              'webpack-app/src/**/*.{ts,tsx}',
+              '!**/*.test.{ts,tsx}',
+              '!**/test-setup.ts',
+              '!*/src/index.{ts,tsx}',
+            ],
+          },
+        ],
+      } satisfies PlaywrightCoverageReporterOptions,
+    ],
   ],
-
-  globalSetup: './src/config/global-setup.ts',
-  globalTeardown: './src/config/global-teardown.ts',
 
   use: {
     headless: true,
