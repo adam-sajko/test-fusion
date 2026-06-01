@@ -231,16 +231,14 @@ Any bundler that produces Istanbul instrumentation will work — the key require
 npm install @test-fusion/playwright-coverage
 ```
 
-#### Step 3: Set Up Coverage Collection
+#### Step 3: Add the Coverage Reporter
 
-Create four files to wire up the coverage lifecycle: initialize before all tests, collect after each test, finalize after all tests.
-
-**`config/coverage.ts`** — shared instance:
+**`config/coverage.ts`** — reporter options:
 
 ```ts
-import { PlaywrightCoverage } from "@test-fusion/playwright-coverage";
+import type { PlaywrightCoverageReporterOptions } from "@test-fusion/playwright-coverage";
 
-export const playwrightCoverage = new PlaywrightCoverage({
+export const coverageOptions = {
   cwd: import.meta.dirname,
   coverageDir: "./playwright-coverage",
   projects: [
@@ -248,60 +246,21 @@ export const playwrightCoverage = new PlaywrightCoverage({
       collectCoverageFrom: ["src/**/*.{ts,tsx}", "!src/**/*.test.{ts,tsx}"],
     },
   ],
-});
+} satisfies PlaywrightCoverageReporterOptions;
 ```
 
-**`config/global-setup.ts`** — initialize coverage (and pass shard info if sharding):
-
-```ts
-import type { FullConfig } from "@playwright/test";
-import { playwrightCoverage } from "./coverage";
-
-export default async function globalSetup(config: FullConfig) {
-  await playwrightCoverage.setup(config.shard);
-}
-```
-
-**`config/global-teardown.ts`** — generate the coverage report:
-
-```ts
-import { playwrightCoverage } from "./coverage";
-
-export default async function globalTeardown() {
-  playwrightCoverage.finish();
-}
-```
-
-**`fixtures/base.ts`** — collect `window.__coverage__` after each test:
-
-```ts
-import { test as base } from "@playwright/test";
-import { playwrightCoverage } from "../config/coverage";
-
-export const test = base.extend({
-  page: async ({ page, browserName }, use) => {
-    await use(page);
-    // Collect coverage from one browser only to avoid duplicates across projects
-    if (browserName === "chromium") {
-      const coverage = await page.evaluate(() => (window as any).__coverage__);
-      playwrightCoverage.addCoverage(coverage);
-    }
-  },
-});
-```
-
-Coverage is collected from one browser only (chromium) to avoid duplicates when running tests across multiple browser projects.
-
-#### Step 4: Wire Up `playwright.config.ts`
-
-Point your Playwright config at the global setup/teardown files, and make sure your app is served with `USE_COVERAGE` enabled so the instrumented build exposes `window.__coverage__`:
+**`playwright.config.ts`** — register the reporter and serve your app with instrumentation enabled:
 
 ```ts
 import { defineConfig } from "@playwright/test";
+import { PlaywrightCoverageReporter } from "@test-fusion/playwright-coverage";
+import { coverageOptions } from "./config/coverage";
 
 export default defineConfig({
-  globalSetup: "./config/global-setup.ts",
-  globalTeardown: "./config/global-teardown.ts",
+  reporter: [
+    ["html", { open: "never" }],
+    [PlaywrightCoverageReporter, coverageOptions],
+  ],
 
   webServer: {
     command: "USE_COVERAGE=1 npm run build && npm run preview",
@@ -313,6 +272,8 @@ export default defineConfig({
 });
 ```
 
+You can also use the package name as a string: `['@test-fusion/playwright-coverage', coverageOptions]`.
+
 If your app uses a dev server instead of a static build, pass `USE_COVERAGE` through the `env` option:
 
 ```ts
@@ -322,6 +283,28 @@ webServer: {
   reuseExistingServer: false,
   env: { USE_COVERAGE: '1' },
 },
+```
+
+#### Step 4: Record Coverage from a Fixture
+
+**`fixtures/base.ts`** — collect `window.__coverage__` after each test:
+
+```ts
+import { test as base, expect } from "@playwright/test";
+import { recordCoverage } from "@test-fusion/playwright-coverage";
+
+export const test = base.extend({
+  page: async ({ page, browserName }, use, testInfo) => {
+    await use(page);
+    // Collect coverage from one browser only to avoid duplicates across projects
+    if (browserName === "chromium") {
+      const coverage = await page.evaluate(() => (window as any).__coverage__);
+      recordCoverage(testInfo, coverage);
+    }
+  },
+});
+
+export { expect };
 ```
 
 Use the custom `test` from `fixtures/base.ts` in your test files instead of importing from `@playwright/test` directly.
@@ -337,7 +320,7 @@ npm install @babel/core babel-plugin-istanbul istanbul-lib-instrument
 Use the same Babel presets and plugins as your bundler config so the coverage structure (statements, branches, functions) matches what the runtime produces:
 
 ```ts
-export const playwrightCoverage = new PlaywrightCoverage({
+export const coverageOptions = {
   cwd: import.meta.dirname,
   coverageDir: "./playwright-coverage",
   projects: [
@@ -365,12 +348,12 @@ export const playwrightCoverage = new PlaywrightCoverage({
       }),
     },
   ],
-});
+} satisfies PlaywrightCoverageReporterOptions;
 ```
 
 #### Sharding
 
-Coverage collection works with Playwright sharding out of the box. When `config.shard` is passed to `playwrightCoverage.setup()`, the plugin writes per-shard files (`coverage-shard-1.json`, `coverage-shard-2.json`, etc.) instead of a single `coverage-final.json`. When `test-fusion build` runs, it detects and merges them via Istanbul automatically.
+Coverage collection works with Playwright sharding. With `--shard`, the reporter writes per-shard files (`coverage-shard-1.json`, `coverage-shard-2.json`, etc.). `test-fusion build` merges them automatically.
 
 See the [Playwright sharding docs](https://playwright.dev/docs/test-sharding) for CI setup examples.
 
@@ -397,12 +380,12 @@ istanbul({
 });
 ```
 
-The same applies to `PlaywrightCoverage` — set `cwd` to the monorepo root:
+The same applies to the coverage reporter options — set `cwd` to the monorepo root:
 
 ```ts
 const cwd = path.resolve(import.meta.dirname, "../../");
 
-new PlaywrightCoverage({
+const coverageOptions = {
   cwd,
   coverageDir: path.resolve(import.meta.dirname, "../playwright-coverage"),
   projects: [
@@ -410,7 +393,7 @@ new PlaywrightCoverage({
       collectCoverageFrom: ["packages/**/src/**/*.{ts,tsx}"],
     },
   ],
-});
+};
 ```
 
 ## Path Normalization
@@ -428,10 +411,10 @@ However, when a runner produces paths that don't start with `rootDir`, the autom
 }
 ```
 
-`PlaywrightCoverage` also supports `transformPath` for normalizing paths at collection time:
+The coverage reporter also supports `transformPath` for normalizing paths at collection time:
 
 ```ts
-new PlaywrightCoverage({
+const coverageOptions = {
   cwd: import.meta.dirname,
   coverageDir: "./playwright-coverage",
   transformPath: (filePath, cwd) => filePath.replace(/^.*?src\//, "src/"),
@@ -440,7 +423,7 @@ new PlaywrightCoverage({
       collectCoverageFrom: ["src/**/*.{ts,tsx}"],
     },
   ],
-});
+};
 ```
 
 ## Contributing

@@ -2,8 +2,6 @@
 
 Istanbul-based coverage reporter for Playwright tests. Collects `window.__coverage__` from instrumented apps and merges it into a standard `coverage-final.json`.
 
-Coverage is handed from the fixture to the reporter via a **sidecar file** (`recordCoverage`), not a Playwright attachment. This keeps coverage out of `results.json` / the HTML report / blob reports, which would otherwise base64-inline a copy of every test's coverage and bloat those artifacts by orders of magnitude.
-
 ## Setup
 
 ### 1. Add the reporter to your Playwright config

@@ -8,8 +8,6 @@ import {
   runPlaywrightListJson,
 } from './internals.js';
 
-export type { JsonReport, JsonSpec, JsonSuite } from './internals.js';
-
 export interface StaleSnapshotOptions {
   /** Working directory (defaults to process.cwd()) */
   cwd?: string;

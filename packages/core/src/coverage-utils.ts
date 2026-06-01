@@ -16,61 +16,11 @@ import type {
   TestStats,
 } from './types/index.js';
 
-/**
- * Reset coverage data to zero coverage values.
- * Takes coverage structure (maps) and initializes all coverage counts to 0.
- */
-export function resetCoverageData<T extends NormalizedCoverageData>(
-  coverageData: T,
-): T {
-  const zeroCoverageData: T = {
-    ...coverageData,
-    statementMap: coverageData.statementMap || {},
-    fnMap: coverageData.fnMap || {},
-    branchMap: coverageData.branchMap || {},
-    s: {},
-    f: {},
-    b: {},
-    l: {},
-  };
-
-  const statementIds = Object.keys(zeroCoverageData.statementMap);
-  for (const statementId of statementIds) {
-    zeroCoverageData.s[statementId] = 0;
-  }
-
-  const functionIds = Object.keys(zeroCoverageData.fnMap);
-  for (const functionId of functionIds) {
-    zeroCoverageData.f[functionId] = 0;
-  }
-
-  const branchIds = Object.keys(zeroCoverageData.branchMap);
-  for (const branchId of branchIds) {
-    const branchInfo = zeroCoverageData.branchMap[branchId];
-    if (branchInfo && Array.isArray(branchInfo.locations)) {
-      zeroCoverageData.b[branchId] = new Array(
-        branchInfo.locations.length,
-      ).fill(0);
-    }
-  }
-
-  for (const statementId of statementIds) {
-    const statementInfo = zeroCoverageData.statementMap[statementId];
-    if (statementInfo?.start?.line) {
-      (zeroCoverageData.l as Record<string, number>)[
-        statementInfo.start.line.toString()
-      ] = 0;
-    }
-  }
-
-  return zeroCoverageData;
-}
-
 function applyStandardNormalization(filePath: string): string {
   return filePath.replace(/^\/+/, '').split(path.sep).join('/');
 }
 
-export function normalizeFilePath(
+function normalizeFilePath(
   filePath: string,
   rootDir: string,
   transformPath?: (filePath: string, rootDir: string) => string,
@@ -271,7 +221,7 @@ export function readPlaywrightCoverage(
   return map.toJSON() as CoverageMapData;
 }
 
-export function readFinalPlaywrightCoverage(
+function readFinalPlaywrightCoverage(
   finalPlaywrightCoverageFile: string,
 ): CoverageMapData | null {
   return readJsonFile<CoverageMapData>(
@@ -353,7 +303,7 @@ export function extractCoverageMetrics(
   };
 }
 
-export function calculateFileCoverage(
+function calculateFileCoverage(
   coverage: IstanbulFileCoverage,
 ): FileCoverageResult {
   const fileStatements = Object.keys(coverage.s || {}).length;
