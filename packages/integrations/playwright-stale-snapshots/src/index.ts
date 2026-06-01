@@ -2,12 +2,9 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import {
   collectExpectedPrefixes,
-  collectTestFilePaths,
-  extractCustomSnapshotNames,
   identifyStaleFiles,
   listAllSnapshotPngs,
   pathExists,
-  resolveTestFile,
   runPlaywrightListJson,
 } from './internals.js';
 
@@ -22,12 +19,14 @@ export interface StaleSnapshotOptions {
   delete?: boolean;
   /** Limit scan to a single Playwright project name */
   project?: string;
-  /** Snapshot file names or glob patterns to exclude from stale detection */
+  /** Snapshot file names or glob patterns to exclude (e.g. custom names) */
   ignore?: string[];
 }
 
 export interface StaleSnapshotResult {
   staleFiles: string[];
+  /** Valid snapshots with index >= 2 (a test took multiple screenshots). */
+  multiSnapshotFiles: string[];
   totalFiles: number;
   deleted: boolean;
 }
@@ -35,14 +34,14 @@ export interface StaleSnapshotResult {
 /**
  * Find stale Playwright screenshot snapshots that no longer match any test.
  *
- * Uses `playwright test --list --reporter=json` to discover expected snapshots,
- * then compares with actual `.png` files in the snapshots directory. Custom
- * snapshot names passed as string literals to `toHaveScreenshot('name.png')`
- * are automatically detected by scanning test source files.
- *
- * Works with the deterministic snapshot template:
+ * The detection is fully deterministic - it never inspects test source. Expected
+ * names are derived from `playwright test --list --reporter=json` and compared
+ * with the `.png` files on disk, assuming the snapshot template:
  *
  *   `{snapshotDir}/{projectName}/{testFileDir}/{testFileName}/{arg}{ext}`
+ *
+ * Snapshots created with a custom name (anything not derived from the test
+ * title) are invisible to `--list`, so they must be declared via `ignore`.
  */
 export async function findStaleSnapshots(
   options: StaleSnapshotOptions = {},
@@ -67,28 +66,13 @@ export async function findStaleSnapshots(
   const jsonReport = runPlaywrightListJson({ cwd, project: options.project });
   const expected = await collectExpectedPrefixes(jsonReport, snapshotsRoot);
 
-  const customNames = new Set<string>();
-  const testFiles = collectTestFilePaths(jsonReport);
-  await Promise.all(
-    testFiles.map(async (file) => {
-      const resolved = await resolveTestFile(cwd, file);
-      if (!resolved) return;
-      try {
-        const content = await fs.readFile(resolved, 'utf8');
-        for (const name of extractCustomSnapshotNames(content)) {
-          customNames.add(name);
-        }
-      } catch {
-        // test file not readable, skip
-      }
-    }),
-  );
-
   const pngs = await listAllSnapshotPngs(snapshotsRoot, options.project);
-  const stale = identifyStaleFiles(snapshotsRoot, expected, pngs, {
-    customNames: customNames.size > 0 ? customNames : undefined,
-    ignorePatterns: options.ignore,
-  });
+  const { stale, multiSnapshot } = identifyStaleFiles(
+    snapshotsRoot,
+    expected,
+    pngs,
+    { ignorePatterns: options.ignore },
+  );
 
   if (shouldDelete && stale.length > 0) {
     await Promise.all(stale.map((f) => fs.rm(f, { force: true })));
@@ -96,6 +80,7 @@ export async function findStaleSnapshots(
 
   return {
     staleFiles: stale,
+    multiSnapshotFiles: multiSnapshot,
     totalFiles: pngs.length,
     deleted: shouldDelete && stale.length > 0,
   };
