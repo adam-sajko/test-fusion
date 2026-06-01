@@ -23,8 +23,8 @@ test.describe('Snapshots', () => {
     const welcomePage = new WelcomePage(page, baseURL);
     await welcomePage.goto();
     await expect(welcomePage.heading).toBeVisible();
-    await expect(welcomePage.heading).toHaveScreenshot('heading.png');
-    const customName = 'custom-snapshot-name.png';
-    await expect(welcomePage.heading).toHaveScreenshot(customName);
+    await expect(welcomePage.heading).toHaveScreenshot(
+      'custom-snapshot-name.png',
+    );
   });
 });

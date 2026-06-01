@@ -47,6 +47,7 @@
     "prepack": "tsup",
     "build": "tsup",
     "dev": "tsup --watch",
+    "test": "tsx --test src/**/*.test.ts",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist node_modules/.cache tsconfig.tsbuildinfo"
   },

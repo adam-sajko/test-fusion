@@ -56,17 +56,16 @@ export function trimLongString(s: string, length = 100): string {
   return s.substring(0, start) + middle + s.slice(-end);
 }
 
-export function sanitizeForSnapshotArg(part: string) {
-  return sanitizeForFilePath(String(part));
-}
-
-export function titlePathToPrefix(titlePath: string[]) {
-  return titlePath
-    .filter(Boolean)
-    .map(sanitizeForSnapshotArg)
-    .filter(Boolean)
-    .join('-')
-    .replace(/^-+|-+$/g, '');
+/**
+ * Mirrors Playwright `{arg}` for anonymous `toHaveScreenshot()` calls:
+ * title path joined with spaces, snapshot index appended, trimmed, then sanitized.
+ */
+export function titlePathToPrefix(titlePath: string[], snapshotIndex = 1) {
+  const fullTitle = [...titlePath.filter(Boolean), String(snapshotIndex)].join(
+    ' ',
+  );
+  if (!fullTitle) return '';
+  return sanitizeForFilePath(trimLongString(fullTitle));
 }
 
 export function looksLikeTestFileTitle(title: unknown): title is string {
@@ -81,26 +80,6 @@ export async function pathExists(p: string) {
   } catch {
     return false;
   }
-}
-
-export async function resolveTestFile(
-  cwd: string,
-  file: string,
-): Promise<string | null> {
-  const direct = path.resolve(cwd, file);
-  if (await pathExists(direct)) return direct;
-
-  try {
-    const entries = await fs.readdir(cwd, { withFileTypes: true });
-    for (const entry of entries) {
-      if (!entry.isDirectory()) continue;
-      const candidate = path.resolve(cwd, entry.name, file);
-      if (await pathExists(candidate)) return candidate;
-    }
-  } catch {
-    // cwd not readable
-  }
-  return null;
 }
 
 export async function collectExpectedPrefixes(
@@ -240,26 +219,20 @@ export function snapshotPathToBucketKey(
   return { bucketKey, fileName };
 }
 
-const TRIM_HASH_START = Math.floor((100 - 7) / 2);
+/** Trailing `-1`, `-2`, ... that Playwright appends per `toHaveScreenshot()` call. */
+const SNAPSHOT_INDEX_SUFFIX = /-\d+$/;
 
 export function matchesAnyExpectedPrefix(
   fileName: string,
   expectedPrefixes: Set<string>,
 ) {
   const base = fileName.endsWith('.png') ? fileName.slice(0, -4) : fileName;
+  // A test can call toHaveScreenshot() multiple times, producing `...-1`,
+  // `...-2`, etc. Ignore that index so every screenshot of a known test matches.
+  const baseStem = base.replace(SNAPSHOT_INDEX_SUFFIX, '');
   for (const prefix of expectedPrefixes) {
     if (base === prefix) return true;
-    // Playwright appends "-1", "-2", etc. for each toHaveScreenshot() call
-    if (
-      base.startsWith(`${prefix}-`) &&
-      /^\d+$/.test(base.slice(prefix.length + 1))
-    ) {
-      return true;
-    }
-    if (prefix.length > 100 && base.length >= TRIM_HASH_START) {
-      const commonStart = prefix.substring(0, TRIM_HASH_START);
-      if (base.startsWith(commonStart)) return true;
-    }
+    if (baseStem === prefix.replace(SNAPSHOT_INDEX_SUFFIX, '')) return true;
   }
   return false;
 }
@@ -305,34 +278,39 @@ export function runPlaywrightListJson(opts: {
   return JSON.parse(stdout) as JsonReport;
 }
 
+/** Playwright's trailing screenshot index (`...-1`, `...-2`, ...). Defaults to 1. */
+export function parseSnapshotIndex(fileName: string): number {
+  const base = fileName.endsWith('.png') ? fileName.slice(0, -4) : fileName;
+  const match = base.match(/-(\d+)$/);
+  return match ? Number(match[1]) : 1;
+}
+
+export interface StaleScanResult {
+  /** Snapshots on disk that match no known test. */
+  stale: string[];
+  /** Valid snapshots with an index >= 2 (a test took more than one screenshot). */
+  multiSnapshot: string[];
+}
+
 export function identifyStaleFiles(
   snapshotsRoot: string,
   expected: Map<string, Set<string>>,
   pngs: string[],
-  options?: { customNames?: Set<string>; ignorePatterns?: string[] },
-): string[] {
+  options?: { ignorePatterns?: string[] },
+): StaleScanResult {
   const stale: string[] = [];
+  const multiSnapshot: string[] = [];
   for (const png of pngs) {
     const parsed = snapshotPathToBucketKey(snapshotsRoot, png);
     if (!parsed) continue;
 
+    // Custom (non-title-derived) names can't be known from `playwright --list`;
+    // they must be declared via --ignore, otherwise they count as stale.
     if (
       options?.ignorePatterns?.length &&
       matchesIgnorePattern(parsed.fileName, options.ignorePatterns)
     ) {
       continue;
-    }
-
-    if (options?.customNames?.size) {
-      const base = parsed.fileName.endsWith('.png')
-        ? parsed.fileName.slice(0, -4)
-        : parsed.fileName;
-      if (
-        options.customNames.has(base) ||
-        options.customNames.has(parsed.fileName)
-      ) {
-        continue;
-      }
     }
 
     const expectedPrefixes = expected.get(parsed.bucketKey);
@@ -342,44 +320,19 @@ export function identifyStaleFiles(
     }
     if (!matchesAnyExpectedPrefix(parsed.fileName, expectedPrefixes)) {
       stale.push(png);
+      continue;
+    }
+
+    // Valid, but a 2nd+ screenshot of the same test: discourage it because the
+    // `-2`, `-3`, ... index can't be verified against a single test title.
+    if (parseSnapshotIndex(parsed.fileName) > 1) {
+      multiSnapshot.push(png);
     }
   }
 
   stale.sort((a, b) => a.localeCompare(b));
-  return stale;
-}
-
-export function extractCustomSnapshotNames(content: string): string[] {
-  const re = /\.toHaveScreenshot\(\s*(['"])([^'"]+)\1/g;
-  const names: string[] = [];
-  for (const match of content.matchAll(re)) {
-    const name = match[2];
-    if (name) {
-      names.push(name.endsWith('.png') ? name.slice(0, -4) : name);
-    }
-  }
-  return names;
-}
-
-export function collectTestFilePaths(report: JsonReport): string[] {
-  const files = new Set<string>();
-
-  function walkSuite(suite: JsonSuite) {
-    if (looksLikeTestFileTitle(suite.title)) files.add(suite.title);
-    else if (suite.file) files.add(suite.file);
-    for (const spec of suite.specs ?? []) {
-      if (spec.file) files.add(spec.file);
-    }
-    for (const child of suite.suites ?? []) {
-      walkSuite(child);
-    }
-  }
-
-  for (const top of report.suites ?? []) {
-    walkSuite(top);
-  }
-
-  return [...files];
+  multiSnapshot.sort((a, b) => a.localeCompare(b));
+  return { stale, multiSnapshot };
 }
 
 export function matchesIgnorePattern(
