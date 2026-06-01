@@ -66,19 +66,23 @@ const config = {
   module: {
     rules: [
       {
-        test: /\.jsx?$/,
-        exclude: /node_modules/,
-        use: ['babel-loader'],
-      },
-      {
-        test: /\.tsx?$/,
+        test: /\.[jt]sx?$/,
         exclude: /node_modules/,
         use: [
-          process.env.USE_COVERAGE && {
+          {
             loader: 'babel-loader',
             options: {
-              plugins: [
+              configFile: false,
+              presets: [
+                '@babel/preset-env',
+                ['@babel/preset-react', { runtime: 'automatic' }],
                 [
+                  '@babel/preset-typescript',
+                  { isTSX: true, allExtensions: true },
+                ],
+              ],
+              plugins: [
+                process.env.USE_COVERAGE && [
                   'babel-plugin-istanbul',
                   {
                     coverageVariable: '__coverage__',
@@ -87,19 +91,10 @@ const config = {
                     exclude: coverageExclude,
                   },
                 ],
-              ],
+              ].filter(Boolean),
             },
           },
-          {
-            loader: 'ts-loader',
-            options: {
-              transpileOnly: true,
-              compilerOptions: {
-                sourceMap: true,
-              },
-            },
-          },
-        ].filter(Boolean),
+        ],
       },
       {
         test: /\.m?js$/,

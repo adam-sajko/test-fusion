@@ -676,11 +676,114 @@ export function mergeCoverageData(
     }
   }
 
+  alignCompatibleMaps(mapA, mapB);
+
   const fusionMap = IstanbulCoverage.createCoverageMap({});
   fusionMap.merge(mapA);
   fusionMap.merge(mapB);
 
   return normalizeCoverageData(fusionMap.toJSON(), rootDir, transformPath);
+}
+
+/**
+ * Different Istanbul instrumentors (e.g. @vitest/coverage-istanbul vs
+ * babel-plugin-istanbul) may produce location maps with matching start
+ * positions but slightly different end positions for the same source file.
+ * Istanbul's merge treats these as distinct entries, creating phantom
+ * uncovered statements. This function detects compatible maps (same keys,
+ * same start positions) and copies mapA's locations into mapB so that
+ * Istanbul can properly merge by key.
+ */
+function alignCompatibleMaps(
+  mapA: ReturnType<typeof IstanbulCoverage.createCoverageMap>,
+  mapB: ReturnType<typeof IstanbulCoverage.createCoverageMap>,
+): void {
+  const filesA = new Set(mapA.files());
+
+  for (const filePath of mapB.files()) {
+    if (!filesA.has(filePath)) continue;
+
+    const dataA = mapA.fileCoverageFor(filePath).data;
+    const dataB = mapB.fileCoverageFor(filePath).data;
+
+    if (mapsAreCompatible(dataA.statementMap, dataB.statementMap)) {
+      for (const key of Object.keys(dataB.statementMap)) {
+        const entry = dataA.statementMap[key];
+        if (entry) dataB.statementMap[key] = entry;
+      }
+    }
+
+    if (fnMapsAreCompatible(dataA.fnMap, dataB.fnMap)) {
+      for (const key of Object.keys(dataB.fnMap)) {
+        const entry = dataA.fnMap[key];
+        if (entry) dataB.fnMap[key] = entry;
+      }
+    }
+
+    if (branchMapsAreCompatible(dataA.branchMap, dataB.branchMap)) {
+      for (const key of Object.keys(dataB.branchMap)) {
+        const entry = dataA.branchMap[key];
+        if (entry) dataB.branchMap[key] = entry;
+      }
+    }
+  }
+}
+
+function startPositionsMatch(
+  a: { line: number; column: number | null },
+  b: { line: number; column: number | null },
+): boolean {
+  return a.line === b.line && a.column === b.column;
+}
+
+function mapsAreCompatible(
+  mapA: Record<string, { start: { line: number; column: number | null } }>,
+  mapB: Record<string, { start: { line: number; column: number | null } }>,
+): boolean {
+  const keysA = Object.keys(mapA);
+  const keysB = Object.keys(mapB);
+  if (keysA.length !== keysB.length) return false;
+
+  for (const key of keysB) {
+    const a = mapA[key];
+    const b = mapB[key];
+    if (!a || !b) return false;
+    if (!startPositionsMatch(a.start, b.start)) return false;
+  }
+  return true;
+}
+
+type LocMap = Record<
+  string,
+  { loc: { start: { line: number; column: number | null } } }
+>;
+
+function fnMapsAreCompatible(mapA: LocMap, mapB: LocMap): boolean {
+  const keysA = Object.keys(mapA);
+  const keysB = Object.keys(mapB);
+  if (keysA.length !== keysB.length) return false;
+
+  for (const key of keysB) {
+    const a = mapA[key];
+    const b = mapB[key];
+    if (!a || !b) return false;
+    if (!startPositionsMatch(a.loc.start, b.loc.start)) return false;
+  }
+  return true;
+}
+
+function branchMapsAreCompatible(mapA: LocMap, mapB: LocMap): boolean {
+  const keysA = Object.keys(mapA);
+  const keysB = Object.keys(mapB);
+  if (keysA.length !== keysB.length) return false;
+
+  for (const key of keysB) {
+    const a = mapA[key];
+    const b = mapB[key];
+    if (!a || !b) return false;
+    if (!startPositionsMatch(a.loc.start, b.loc.start)) return false;
+  }
+  return true;
 }
 
 export function getFinalPlaywrightCoverageData(

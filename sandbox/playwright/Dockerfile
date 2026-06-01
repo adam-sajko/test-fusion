@@ -18,3 +18,6 @@ COPY sandbox/playwright/package.json sandbox/playwright/
 RUN yarn install --immutable
 
 COPY . .
+
+RUN yarn workspace @sandbox/vite-app build && \
+    yarn workspace @sandbox/webpack-app build

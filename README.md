@@ -134,63 +134,78 @@ Playwright runs tests in a browser, so it doesn't produce Istanbul coverage by d
 
 Add Istanbul instrumentation to your bundler so `window.__coverage__` is available at runtime. This should only be enabled during CI or when running Playwright — not in production.
 
-**Vite** — using `vite-plugin-istanbul` (works with any framework):
+> **Important:** If you plan to merge Playwright coverage with unit test coverage (Vitest, Jest) for the **same source files** using test-fusion's fusion report, Istanbul must instrument the **original TypeScript source** — not the compiled JavaScript output. Use `@babel/preset-typescript` together with `babel-plugin-istanbul` in a single Babel pass so that statement maps use original source line numbers. Approaches that compile TypeScript first (e.g. `ts-loader`, `esbuild`, `vite-plugin-istanbul`) and then instrument the result will produce statement maps with compiled-JS line numbers that cannot be merged correctly with unit test coverage.
+>
+> If you only use Playwright coverage without merging it with unit test coverage for the same files, standard approaches like `vite-plugin-istanbul` or `ts-loader` + `babel-plugin-istanbul` work fine.
+
+**Vite** — use a `enforce: 'pre'` plugin to instrument before Vite's built-in esbuild transform:
 
 ```ts
+import { transformSync } from "@babel/core";
+import type { Plugin } from "vite";
 import { defineConfig } from "vite";
-import istanbul from "vite-plugin-istanbul";
 
-export default defineConfig({
-  plugins: [
-    process.env.USE_COVERAGE &&
-      istanbul({
-        include: ["src/**/*.{ts,tsx}"],
-        exclude: ["**/*.test.{ts,tsx}"],
-      }),
-  ].filter(Boolean),
-});
-```
-
-**Vite + React** — alternatively, use the built-in Babel integration of `@vitejs/plugin-react`:
-
-```ts
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-
-export default defineConfig({
-  plugins: [
-    react({
-      babel: {
+function istanbulPlugin(): Plugin {
+  let babel: typeof import("@babel/core");
+  return {
+    name: "istanbul-instrument",
+    enforce: "pre",
+    async buildStart() {
+      babel = await import("@babel/core");
+    },
+    transform(code, id) {
+      if (!/\.[jt]sx?$/.test(id) || id.includes("node_modules")) return null;
+      const result = babel.transformSync(code, {
+        filename: id,
+        configFile: false,
+        babelrc: false,
+        presets: [
+          ["@babel/preset-typescript", { isTSX: true, allExtensions: true }],
+        ],
         plugins: [
-          process.env.USE_COVERAGE && [
+          [
             "babel-plugin-istanbul",
             {
-              coverageVariable: "__coverage__",
               include: ["src/**/*.{ts,tsx}"],
               exclude: ["**/*.test.{ts,tsx}"],
             },
           ],
-        ].filter(Boolean),
-      },
-    }),
-  ],
+        ],
+        sourceMaps: true,
+      });
+      if (result?.code != null) return { code: result.code, map: result.map };
+    },
+  };
+}
+
+export default defineConfig({
+  plugins: [process.env.USE_COVERAGE && istanbulPlugin()].filter(Boolean),
 });
 ```
 
-**Webpack:**
+**Webpack** — use a single `babel-loader` with `@babel/preset-typescript` instead of `ts-loader`:
 
 ```js
 module.exports = {
   module: {
     rules: [
       {
-        test: /\.tsx?$/,
+        test: /\.[jt]sx?$/,
+        exclude: /node_modules/,
         use: [
-          process.env.USE_COVERAGE && {
+          {
             loader: "babel-loader",
             options: {
-              plugins: [
+              presets: [
+                "@babel/preset-env",
+                ["@babel/preset-react", { runtime: "automatic" }],
                 [
+                  "@babel/preset-typescript",
+                  { isTSX: true, allExtensions: true },
+                ],
+              ],
+              plugins: [
+                process.env.USE_COVERAGE && [
                   "babel-plugin-istanbul",
                   {
                     coverageVariable: "__coverage__",
@@ -198,18 +213,17 @@ module.exports = {
                     exclude: ["**/*.test.{ts,tsx}"],
                   },
                 ],
-              ],
+              ].filter(Boolean),
             },
           },
-          "ts-loader",
-        ].filter(Boolean),
+        ],
       },
     ],
   },
 };
 ```
 
-Any bundler that produces Istanbul instrumentation will work — the examples above are just the most common setups.
+Any bundler that produces Istanbul instrumentation will work — the key requirement is that `babel-plugin-istanbul` runs on the original TypeScript source (not post-compilation output) so that coverage maps are compatible across test runners.
 
 #### Step 2: Install the Coverage Package
 

@@ -1,11 +1,7 @@
 import path from 'node:path';
-import { PlaywrightCoverage } from '@test-fusion/playwright-coverage';
+import type { PlaywrightCoverageReporterOptions } from '@test-fusion/playwright-coverage';
 
-const sandboxDir = path.resolve(import.meta.dirname, '../../../');
-const coverageDir = path.resolve(
-  import.meta.dirname,
-  '../../playwright-coverage',
-);
+const sandboxDir = path.resolve(import.meta.dirname, '..');
 
 const uiPatterns = [
   'ui/src/components/**/*.{ts,tsx}',
@@ -13,9 +9,10 @@ const uiPatterns = [
   '!ui/src/index.ts',
 ];
 
-export const playwrightCoverage = new PlaywrightCoverage({
+/** Reporter options for the @test-fusion/playwright-coverage reporter. */
+export const coverageReporterOptions = {
   cwd: sandboxDir,
-  coverageDir,
+  coverageDir: 'playwright/playwright-coverage',
   projects: [
     {
       collectCoverageFrom: uiPatterns,
@@ -60,4 +57,4 @@ export const playwrightCoverage = new PlaywrightCoverage({
       ],
     },
   ],
-});
+} satisfies PlaywrightCoverageReporterOptions;

@@ -11,7 +11,12 @@
     "esModuleInterop": true,
     "skipLibCheck": true
   },
-  "include": ["src/**/*", "tests/**/*", "playwright.config.ts"],
+  "include": [
+    "src/**/*",
+    "tests/**/*",
+    "playwright.config.ts",
+    "coverage.options.ts"
+  ],
   "exclude": [
     "node_modules",
     "dist",

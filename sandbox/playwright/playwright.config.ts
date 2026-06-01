@@ -1,5 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
+import { coverageReporterOptions } from './coverage.options';
+
 const WEBPACK_APP_PORT = 3000;
 const VITE_APP_PORT = 3001;
 
@@ -27,10 +29,8 @@ export default defineConfig({
     ['html', { open: 'never', outputFolder: './playwright-report' }],
     ['json', { outputFile: './test-results/results.json' }],
     ['list', { printSteps: true }],
+    ['@test-fusion/playwright-coverage', coverageReporterOptions],
   ],
-
-  globalSetup: './src/config/global-setup.ts',
-  globalTeardown: './src/config/global-teardown.ts',
 
   use: {
     headless: true,

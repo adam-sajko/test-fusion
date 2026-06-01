@@ -1,2 +1,9 @@
-export type { CoverageProject, PlaywrightCoverageConfig } from './coverage.js';
-export { PlaywrightCoverage } from './coverage.js';
+export type {
+  CoverageProject,
+  PlaywrightCoverageReporterOptions,
+} from './reporter.js';
+export {
+  PlaywrightCoverageReporter,
+  PlaywrightCoverageReporter as default,
+  recordCoverage,
+} from './reporter.js';
