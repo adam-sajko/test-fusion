@@ -55,6 +55,24 @@ export default defineConfig({
       type: 'playwright',
       name: 'Playwright (UI Library + Apps)',
       coverageThreshold,
+      ...(process.env.PLAYWRIGHT_SHARDED === '1' && {
+        // Apps are built locally, so istanbul embeds each developer's absolute paths.
+        // Sharded Playwright runs in Docker (/app/sandbox) — normalize to sandbox-relative keys.
+        transformPath: (filePath, rootDir) => {
+          const posix = filePath.replace(/\\/g, '/');
+          const normalizedRoot = rootDir.endsWith('/') ? rootDir : `${rootDir}/`;
+          if (posix.startsWith(normalizedRoot)) {
+            return posix.slice(normalizedRoot.length);
+          }
+          const rootName = path.basename(rootDir.replace(/\/+$/, ''));
+          const marker = `/${rootName}/`;
+          const markerIdx = posix.indexOf(marker);
+          if (markerIdx !== -1) {
+            return posix.slice(markerIdx + marker.length);
+          }
+          return posix.replace(/^\/+/, '');
+        },
+      }),
       source: {
         coverage: { dir: './playwright/playwright-coverage' },
         testReport: { dir: './playwright/playwright-report' },

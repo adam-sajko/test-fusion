@@ -1,23 +1,6 @@
-FROM mcr.microsoft.com/playwright:v1.58.2-noble as base
-
-RUN corepack enable
+FROM mcr.microsoft.com/playwright:v1.60.0-noble
 
 WORKDIR /app
 
-COPY package.json .yarnrc.yml yarn.lock ./
-COPY .yarn .yarn
-COPY packages/tsconfig/package.json packages/tsconfig/
-COPY packages/integrations/playwright-coverage/package.json packages/integrations/playwright-coverage/
-COPY packages/integrations/playwright-stale-snapshots/package.json packages/integrations/playwright-stale-snapshots/
-COPY packages/core/package.json packages/core/
-COPY sandbox/ui/package.json sandbox/ui/
-COPY sandbox/vite-app/package.json sandbox/vite-app/
-COPY sandbox/webpack-app/package.json sandbox/webpack-app/
-COPY sandbox/playwright/package.json sandbox/playwright/
-
-RUN yarn install --immutable
-
-COPY . .
-
-RUN yarn workspace @sandbox/vite-app build && \
-    yarn workspace @sandbox/webpack-app build
+COPY package.json ./
+RUN corepack enable && corepack install

@@ -7,14 +7,8 @@ SHARDS=2
 SHARDED=false
 IMAGE="playwright-coverage"
 PW_DIR="sandbox/playwright"
-
-MOUNTS=(
-  blob-report
-  snapshots
-  playwright-report
-  test-results
-  playwright-coverage
-)
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+NODE_MODULES_VOLUME="test-fusion-linux-node_modules"
 
 for arg in "$@"; do
   case "$arg" in
@@ -24,11 +18,11 @@ for arg in "$@"; do
 done
 
 docker_run() {
-  local mount_flags=""
-  for dir in "${MOUNTS[@]}"; do
-    mount_flags+=" -v ./${PW_DIR}/${dir}:/app/${PW_DIR}/${dir}"
-  done
-  docker run --rm -e FORCE_COLOR=1 --ipc=host --init $mount_flags "$IMAGE" \
+  docker run --rm -e FORCE_COLOR=1 -e PLAYWRIGHT_SHARDED=1 --ipc=host --init \
+    -v "${REPO_ROOT}:/app" \
+    -v "${NODE_MODULES_VOLUME}:/app/node_modules" \
+    -w /app \
+    "$IMAGE" \
     bash -c "$1"
 }
 
@@ -49,8 +43,14 @@ yarn workspaces foreach --all --exclude '@sandbox/playwright' run test
 step_end
 
 if [ "$SHARDED" = true ]; then
+  export PLAYWRIGHT_SHARDED=1
+
   step_begin "Building Docker image"
   docker buildx build -t "$IMAGE" -f sandbox/playwright/Dockerfile --load .
+  step_end
+
+  step_begin "Installing Linux dependencies (Docker)"
+  docker_run "yarn install --immutable"
   step_end
 
   for i in $(seq 1 "$SHARDS"); do

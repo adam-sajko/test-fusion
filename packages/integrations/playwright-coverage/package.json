@@ -68,7 +68,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
-    "@playwright/test": "^1.58.2",
+    "@playwright/test": "^1.60.0",
     "@tools/tsconfig": "workspace:*",
     "@types/istanbul-lib-coverage": "^2.0.6",
     "@types/istanbul-lib-instrument": "^1.7.8",
