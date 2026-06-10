@@ -1,7 +1,6 @@
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs/promises';
-import { createRequire } from 'node:module';
 import path from 'node:path';
 
 export type JsonReport = {
@@ -21,27 +20,13 @@ export type JsonSpec = {
   tests?: Array<{ projectName?: string }>;
 };
 
-const require = createRequire(import.meta.url);
-
-const sanitizeForFilePath: (input: string) => string = (() => {
-  try {
-    const utils = require('playwright-core/lib/utils') as {
-      sanitizeForFilePath?: (s: string) => string;
-    };
-    if (typeof utils?.sanitizeForFilePath === 'function') {
-      return utils.sanitizeForFilePath;
-    }
-  } catch {
-    // playwright-core not installed, using fallback sanitizer
-  }
-  return (input: string) =>
-    String(input)
-      .trim()
-      .replace(/['"]/g, '')
-      .replace(/[^a-zA-Z0-9]+/g, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '');
-})();
+function sanitizeForFilePath(input: string): string {
+  return String(input).replace(
+    // biome-ignore lint/suspicious/noControlCharactersInRegex: mirrors Playwright fileUtils.sanitizeForFilePath
+    /[\x00-\x2C\x2E-\x2F\x3A-\x40\x5B-\x60\x7B-\x7F]+/g,
+    '-',
+  );
+}
 
 export function calculateSha1(input: string): string {
   return createHash('sha1').update(input).digest('hex');
