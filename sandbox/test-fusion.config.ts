@@ -60,7 +60,9 @@ export default defineConfig({
         // Sharded Playwright runs in Docker (/app/sandbox) — normalize to sandbox-relative keys.
         transformPath: (filePath, rootDir) => {
           const posix = filePath.replace(/\\/g, '/');
-          const normalizedRoot = rootDir.endsWith('/') ? rootDir : `${rootDir}/`;
+          const normalizedRoot = rootDir.endsWith('/')
+            ? rootDir
+            : `${rootDir}/`;
           if (posix.startsWith(normalizedRoot)) {
             return posix.slice(normalizedRoot.length);
           }

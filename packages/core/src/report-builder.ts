@@ -688,7 +688,9 @@ export class ReportBuilder {
 
       for (const coverage of normalizedCoverageList) {
         if (fusionCoverage === null) {
-          fusionCoverage = coverage;
+          // Normalize the first report like the merged ones so the result is
+          // independent of report order.
+          fusionCoverage = normalizeCoverageData(coverage, this.config.rootDir);
         } else {
           fusionCoverage = mergeCoverageData(
             fusionCoverage,
