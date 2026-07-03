@@ -225,9 +225,13 @@ export function matchesAnyExpectedPrefix(
 export function runPlaywrightListJson(opts: {
   cwd: string;
   project?: string;
+  config?: string;
 }): JsonReport {
   const cmd = process.platform === 'win32' ? 'npx.cmd' : 'npx';
   const pwArgs = ['playwright', 'test', '--list', '--reporter=json'];
+  if (opts.config) {
+    pwArgs.push(`--config=${opts.config}`);
+  }
   if (opts.project) {
     pwArgs.push(`--project=${opts.project}`);
   }

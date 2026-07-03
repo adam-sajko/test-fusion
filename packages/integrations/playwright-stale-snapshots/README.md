@@ -21,6 +21,7 @@ npx playwright-stale-snapshots                          # list stale files (exit
 npx playwright-stale-snapshots --delete                 # remove stale files (refused in CI)
 npx playwright-stale-snapshots --dir path/to/project    # Playwright project directory
 npx playwright-stale-snapshots --project chromium       # limit to a single Playwright project
+npx playwright-stale-snapshots --config path/to/config  # Playwright config file
 npx playwright-stale-snapshots --snapshots-dir path     # custom snapshots directory
 npx playwright-stale-snapshots --ignore "custom-*.png"  # declare names the tool can't derive
 ```

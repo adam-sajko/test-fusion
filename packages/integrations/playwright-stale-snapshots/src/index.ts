@@ -17,6 +17,8 @@ export interface StaleSnapshotOptions {
   delete?: boolean;
   /** Limit scan to a single Playwright project name */
   project?: string;
+  /** Path to a Playwright config file (passed to `playwright test --config`) */
+  config?: string;
   /** Snapshot file names or glob patterns to exclude (e.g. custom names) */
   ignore?: string[];
 }
@@ -58,10 +60,19 @@ export async function findStaleSnapshots(
   }
 
   if (!(await pathExists(snapshotsRoot))) {
-    throw new Error(`Snapshots directory not found at ${snapshotsRoot}`);
+    return {
+      staleFiles: [],
+      multiSnapshotFiles: [],
+      totalFiles: 0,
+      deleted: false,
+    };
   }
 
-  const jsonReport = runPlaywrightListJson({ cwd, project: options.project });
+  const jsonReport = runPlaywrightListJson({
+    cwd,
+    project: options.project,
+    config: options.config,
+  });
   const expected = await collectExpectedPrefixes(jsonReport, snapshotsRoot);
 
   const pngs = await listAllSnapshotPngs(snapshotsRoot, options.project);

@@ -48,6 +48,10 @@ program
   .option('--delete', 'Delete stale snapshots (refused in CI)', false)
   .option('--project <name>', 'Limit to a single Playwright project')
   .option(
+    '--config <path>',
+    'Path to a Playwright config file (passed to playwright test --config)',
+  )
+  .option(
     '--snapshots-dir <path>',
     'Path to snapshots directory (defaults to ./snapshots)',
   )
@@ -64,6 +68,7 @@ program.action(
   async (options: {
     delete?: boolean;
     project?: string;
+    config?: string;
     snapshotsDir?: string;
     dir?: string;
     ignore?: string[];
@@ -78,6 +83,7 @@ program.action(
         snapshotsDir: options.snapshotsDir,
         delete: Boolean(options.delete),
         project: options.project,
+        config: options.config,
         ignore: options.ignore,
       });
 
