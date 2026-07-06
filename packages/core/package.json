@@ -1,6 +1,6 @@
 {
   "name": "@test-fusion/core",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "Merge Jest and Playwright test reports and coverage into a single dashboard",
   "author": "Adam Sajko",
   "license": "MIT",

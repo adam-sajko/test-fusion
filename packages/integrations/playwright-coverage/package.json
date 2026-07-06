@@ -1,6 +1,6 @@
 {
   "name": "@test-fusion/playwright-coverage",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "Istanbul-based coverage reporter for Playwright tests",
   "author": "Adam Sajko",
   "license": "MIT",
