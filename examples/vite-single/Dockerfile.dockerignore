@@ -1,11 +1,8 @@
-# dependencies
 node_modules/
-
-# build outputs
 dist/
 *.tsbuildinfo
 
-# testing & coverage
+# testing & coverage artifacts
 coverage/
 *.lcov
 test-report.html
@@ -15,7 +12,7 @@ test-results/
 test-results.json
 test-fusion-report/
 
-# playwright
+# playwright artifacts
 playwright-report/
 playwright-coverage/
 blob-report/
@@ -27,9 +24,7 @@ snapshots/
 # env files
 .env
 .env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env*.local
 
 # logs
 npm-debug.log*
@@ -38,15 +33,16 @@ yarn-error.log*
 
 # yarn
 .yarn/cache
-.yarn/releases
 .yarn/install-state.gz
 
-# editors
+# editors & OS
 .idea/
-
-# OS
+.vscode/
 .DS_Store
 
 # misc
 *.pem
 build/
+
+# git
+.git/

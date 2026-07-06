@@ -51,7 +51,7 @@ export { expect };
 |--------|------|---------|-------------|
 | `coverageDir` | `string` | — | Directory for coverage artifacts. Resolved relative to `cwd`. |
 | `cwd` | `string?` | Playwright's `rootDir` | Base directory for resolving globs and normalizing paths. |
-| `transformPath` | `function?` | — | Custom path transform for normalizing coverage paths (useful for Docker/monorepo). |
+| `transformPath` | `function?` | — | Escape hatch for aligning keys when coverage paths don't match `rootDir` on their own. Core only strips the `rootDir` prefix; supply this when the reporter runs somewhere whose paths differ from where fusion runs (e.g. a local Docker container mirroring CI). |
 | `projects` | `CoverageProject[]?` | — | Per-project config for zero-coverage baselines via Babel instrumentation. |
 
 For full documentation, see the [main README](https://github.com/adam-sajko/test-fusion#playwright).

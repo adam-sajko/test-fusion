@@ -1,0 +1,30 @@
+{
+  "name": "@ex-jest-mono/playwright",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:update-snapshots": "playwright test --update-snapshots",
+    "merge-reports": "playwright merge-reports --config playwright.merge.config.ts ./blob-report",
+    "install-browsers": "playwright install --with-deps",
+    "show-report": "playwright show-report",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist node_modules/.cache tsconfig.tsbuildinfo test-results blob-report playwright-report playwright-coverage snapshots"
+  },
+  "dependencies": {
+    "@test-fusion/playwright-coverage": "workspace:*"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.25.2",
+    "@babel/preset-env": "^7.25.3",
+    "@babel/preset-react": "^7.25.9",
+    "@babel/preset-typescript": "^7.23.0",
+    "@playwright/test": "^1.60.0",
+    "@tools/tsconfig": "workspace:*",
+    "babel-plugin-istanbul": "^7.0.1",
+    "istanbul-lib-instrument": "^6.0.3",
+    "typescript": "~5.9.2"
+  }
+}

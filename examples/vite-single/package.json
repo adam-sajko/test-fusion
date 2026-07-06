@@ -1,0 +1,48 @@
+{
+  "name": "@ex-vite-single/app",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Single-package example: fuse Vitest unit coverage with Playwright E2E over one source tree",
+  "scripts": {
+    "dev": "vite --port 4200",
+    "start": "http-server ./dist -a 127.0.0.1 -p 4200 --cors -s",
+    "build": "NODE_ENV=production USE_COVERAGE=1 vite build",
+    "test": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:update": "playwright test --update-snapshots",
+    "merge-reports": "playwright merge-reports --config playwright.merge.config.ts ./blob-report",
+    "install-browsers": "playwright install --with-deps",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist coverage test-report test-results.json test-results blob-report playwright-report playwright-coverage snapshots .vite node_modules/.cache tsconfig.tsbuildinfo test-fusion-report"
+  },
+  "dependencies": {
+    "@test-fusion/playwright-coverage": "workspace:*",
+    "react": "19.0.4",
+    "react-dom": "19.0.4"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.29.0",
+    "@babel/preset-env": "^7.25.3",
+    "@babel/preset-react": "^7.25.9",
+    "@babel/preset-typescript": "^7.28.5",
+    "@playwright/test": "^1.60.0",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^6.8.0",
+    "@testing-library/react": "^16.3.0",
+    "@tools/tsconfig": "workspace:*",
+    "@types/babel__core": "^7",
+    "@types/node": "^24.5.0",
+    "@types/react": "^19.1.13",
+    "@types/react-dom": "^19.1.9",
+    "@vitejs/plugin-react": "^6.0.1",
+    "@vitest/coverage-istanbul": "^4.1.0",
+    "babel-plugin-istanbul": "^7.0.1",
+    "http-server": "^14.1.1",
+    "istanbul-lib-instrument": "^6.0.3",
+    "jsdom": "^29.0.0",
+    "typescript": "~5.9.2",
+    "vite": "^8.0.1",
+    "vitest": "^4.1.0"
+  }
+}
