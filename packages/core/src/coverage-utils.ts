@@ -586,6 +586,25 @@ export function mergeTestStats(
   };
 }
 
+/**
+ * Return the flat Istanbul coverage for a map entry. Some sources serialize a
+ * FileCoverage instance as `{ data: {...} }` (its only own-enumerable property),
+ * and others as a hybrid `{ data: {...}, statementMap, s, ... }`. The nested
+ * `data` can go stale after Istanbul merges (e.g. sharded runs), so prefer the
+ * flat fields and only fall back to `data` for pure wrappers with no own map.
+ */
+function unwrapCoverageEntry(value: unknown): NormalizedCoverageData {
+  if (
+    value &&
+    typeof value === 'object' &&
+    'data' in value &&
+    !('statementMap' in value)
+  ) {
+    return (value as { data: NormalizedCoverageData }).data;
+  }
+  return value as NormalizedCoverageData;
+}
+
 export function mergeCoverageData(
   coverageA: CoverageMapData | null,
   coverageB: CoverageMapData | null,
@@ -594,11 +613,11 @@ export function mergeCoverageData(
 ): CoverageMapData {
   const mapA = IstanbulCoverage.createCoverageMap({});
   if (coverageA) {
-    for (const [filePath, coverageData] of Object.entries(coverageA)) {
+    for (const [filePath, value] of Object.entries(coverageA)) {
       const relativePath = normalizeFilePath(filePath, rootDir, transformPath);
       const validCoverageData = createValidCoverageData(
         relativePath,
-        coverageData,
+        unwrapCoverageEntry(value),
         rootDir,
       );
       mapA.addFileCoverage(validCoverageData);
@@ -609,17 +628,9 @@ export function mergeCoverageData(
   if (coverageB) {
     for (const [filePath, value] of Object.entries(coverageB)) {
       const relativePath = normalizeFilePath(filePath, rootDir, transformPath);
-      let coverageData: NormalizedCoverageData;
-
-      if (value && typeof value === 'object' && 'data' in value) {
-        coverageData = (value as { data: NormalizedCoverageData }).data;
-      } else {
-        coverageData = value as NormalizedCoverageData;
-      }
-
       const validCoverageData = createValidCoverageData(
         relativePath,
-        coverageData,
+        unwrapCoverageEntry(value),
         rootDir,
       );
       mapB.addFileCoverage(validCoverageData);

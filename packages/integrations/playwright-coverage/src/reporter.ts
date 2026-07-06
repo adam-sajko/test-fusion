@@ -79,8 +79,11 @@ function normalizeCoverageData(
 
   for (const [filePath, coverage] of Object.entries(coverageData)) {
     const normalizedPath = normalizeFilePath(filePath, cwd, transformPath);
+    // Build entries explicitly from the flat Istanbul fields. Values from
+    // map.toJSON() are FileCoverage instances whose only own-enumerable property
+    // is `data`; spreading them would emit a nested `data` copy that goes stale
+    // when shard files are later merged, corrupting fused coverage.
     normalizedCoverage[normalizedPath] = {
-      ...coverage,
       path: normalizedPath,
       statementMap: coverage.statementMap || {},
       fnMap: coverage.fnMap || {},
